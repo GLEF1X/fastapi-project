@@ -4,7 +4,8 @@ from fastapi import FastAPI
 
 import services
 from data import config
-from views import home, api
+from views import home
+from api.main import api_router
 
 api_kwargs = {
     'debug': True,
@@ -34,7 +35,7 @@ def configure_templates() -> None:
 
 def configure_routes() -> None:
     app.include_router(home.api_router, include_in_schema=False)
-    app.include_router(api.api_router, include_in_schema=True)
+    app.include_router(api_router, include_in_schema=True)
 
 
 @app.on_event('startup')
