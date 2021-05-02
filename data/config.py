@@ -21,6 +21,8 @@ DB_USER: typing.Optional[str] = env.str('DB_USER')
 DB_PASS: typing.Optional[str] = env.str("DB_PASS")
 DB_HOST: typing.Optional[str] = env.str("DB_HOST")
 DB_NAME: typing.Optional[str] = env.str("DB_NAME")
+CONNECTION_URL = f'postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}'
+
 
 # FastApi config
 APP_NAME: typing.Optional[str] = env.str("APP_NAME")
@@ -41,6 +43,7 @@ __all__ = (
     'DB_NAME',
     'DB_HOST',
     'DB_PASS',
+    'CONNECTION_URL',
     # FastApi variables
     'APP_NAME',
     'API_VERSION',

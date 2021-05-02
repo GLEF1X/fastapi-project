@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import Header, APIRouter
 from starlette.responses import JSONResponse
 
-from services.db import user
+from services.db import crud
 from services.misc import User, DefaultResponse
 
 api_router = APIRouter(prefix="/api/v1")
@@ -15,8 +15,7 @@ async def test(user_agent: Optional[str] = Header(...)):
     return {"success": True, "User-Agent": user_agent}
 
 
-@api_router.put('/users/create/', responses={400: {"model": DefaultResponse}},
-                response_model=User)
+@api_router.put('/users/create/', responses={400: {"model": DefaultResponse}})
 async def create_user(
         us: User,
         user_agent: Optional[str] = Header(None, title="User-Agent")
@@ -30,6 +29,6 @@ async def create_user(
                 "success": False
             }
         )
-    entry = await user.add_entry(**us.dict())
-    print(entry)
+    await crud.add_user(**us.dict())
+
     return {"success": True, "User-Agent": user_agent}

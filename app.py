@@ -1,8 +1,9 @@
 import fastapi_jinja
 import uvicorn
 from fastapi import FastAPI
+
+import services
 from data import config
-from services.db import user
 from views import home, api
 
 api_kwargs = {
@@ -38,7 +39,7 @@ def configure_routes() -> None:
 
 @app.on_event('startup')
 async def on_startup():
-    await user.setup()
+    await services.connect()
 
 
 if __name__ == '__main__':

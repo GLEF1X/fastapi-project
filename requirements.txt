@@ -16,3 +16,4 @@ loguru
 environs
 uvloop
 git+https://github.com/ageekinside/fastapi-jinja
+sqlalchemy

@@ -1,7 +1,4 @@
-from .models import User
+from .base import connect
+from .models import User, Order, Product
 
-user = User.connect()
-
-__all__ = (
-    'user'
-)
+__all__ = ('User', 'Order', 'Product', 'connect')

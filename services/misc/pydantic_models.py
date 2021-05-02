@@ -1,12 +1,10 @@
-
-from typing import Optional, Union, NoReturn, Any
+from typing import Optional, Union, NoReturn
 
 from email_validator import validate_email
 from pydantic import BaseModel, Field, validator
 
 
 class User(BaseModel):
-    id: Optional[int] = Field(default=None)
     first_name: str = Field(..., example="Gleb", title="Имя")
     last_name: str = Field(..., example="Garanin", title="Фамилия")
     phone_number: Optional[str] = Field(
@@ -16,6 +14,7 @@ class User(BaseModel):
     )
     email: Optional[str] = Field(..., title="Адрес электронной почты",
                                  example="glebgar567@gmail.com")
+    balance: float
 
     @validator("email")
     def validate_em(cls, v: ...) -> Union[str, NoReturn]:
