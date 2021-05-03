@@ -1,13 +1,13 @@
 from typing import Optional, List
 
-from fastapi import Header, Body
+from fastapi import Header, Body, Path, HTTPException
 from pydantic import ValidationError
 
-from api.config import DETAIL_RESPONSES
 from api.application import api_router
-from services.db import crud
+from api.config import DETAIL_RESPONSES
+from services.db import crud, UnableToDelete
 from services.misc import User, DefaultResponse
-from services.misc.pydantic_models import ObjectCount
+from services.misc.pydantic_models import ObjectCount, SimpleResponse
 from services.utils.response_validation import not_found, bad_response
 
 
@@ -66,3 +66,23 @@ async def get_users_count(
     if not user_agent:
         return bad_response()
     return {"count": await crud.count_users()}
+
+
+@api_router.delete("/users/{user_id}/delete",
+                   response_description="return nothing",
+                   tags=["Users"], summary="Delete user from db",
+                   response_model=SimpleResponse)
+async def delete_user(
+        user_id: int = Path(...),
+        user_agent: Optional[str] = Header(None, title="User-Agent"),
+):
+    if not user_agent:
+        return bad_response()
+    try:
+        await crud.delete_user(user_id)
+    except UnableToDelete:
+        raise HTTPException(
+            status_code=400,
+            detail=f"There isn't entry with id={user_id}"
+        )
+    return {"response": "user deleted"}

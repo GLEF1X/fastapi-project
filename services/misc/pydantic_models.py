@@ -65,6 +65,10 @@ class ObjectCount(BaseModel):
     count: int = Field(..., example=44)
 
 
+class SimpleResponse(BaseModel):
+    message: str = Field(...)
+
+
 class TestResponse(BaseModel):
     success: bool = True
     user_agent: Optional[str] = Field(..., alias="User-Agent")

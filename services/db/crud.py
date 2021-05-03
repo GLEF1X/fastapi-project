@@ -1,9 +1,10 @@
 import typing
 
-from sqlalchemy import insert, func
+from sqlalchemy import insert, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from . import UnableToDelete
 from .base import Session
 from .models import *
 
@@ -56,6 +57,15 @@ async def add_product(**kwargs: typing.Any) -> Product:
             query_insert
         )).first()
     return result
+
+
+async def delete_user(user_id: int) -> None:
+    async with Session.begin() as session:
+        session: AsyncSession
+        query_delete = delete(User).where(User.id == user_id).returning(User)
+        result = (await session.execute(query_delete)).scalars().first()
+    if not isinstance(result, User):
+        raise UnableToDelete()
 
 
 __all__ = ('add_user', 'select_user', 'get_all_users')
