@@ -4,7 +4,7 @@ from dependency_injector.wiring import inject, Provide
 from fastapi import Header, APIRouter, Depends
 
 from services.misc.pydantic_models import TestResponse
-from services.redis.container import Application
+from services.redis.containers import Application
 from services.redis.services import RedisService
 
 api_router = APIRouter(prefix="/api/v1")
