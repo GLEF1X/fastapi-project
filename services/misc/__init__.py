@@ -1,6 +1,8 @@
-from .pydantic_models import User, DefaultResponse
+from .pydantic_models import User, DefaultResponse, TestResponse, Product
 
 __all__ = (
     'User',
-    'DefaultResponse'
+    'DefaultResponse',
+    'TestResponse',
+    'Product'
 )
