@@ -90,4 +90,4 @@ class Order(Base):
 #         # print(user)
 #         print(result.scalar())
 
-__all__ = ('User', 'Order', 'Product')
+__all__ = ('User', 'Order', 'Product', 'SizeEnum')

@@ -2,14 +2,15 @@ import sqlalchemy as sa
 import sqlalchemy.ext.declarative
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, DeclarativeMeta
 from sqlalchemy.sql.ddl import CreateColumn
 
 from data.config import CONNECTION_URL
 
-Base: sa.ext.declarative.DeclarativeMeta = sa.ext.declarative.declarative_base()
+Base = sa.ext.declarative.declarative_base()
 
-engine = create_async_engine(CONNECTION_URL, echo=False)
+engine = create_async_engine(CONNECTION_URL, echo=False, pool_size=40,
+                             max_overflow=0)
 
 Session = sessionmaker(bind=engine, expire_on_commit=False,
                        class_=AsyncSession, autocommit=False)
@@ -22,11 +23,12 @@ def use_identity(element, compiler, **kw):
     return text
 
 
-async def connect():
-    async with engine.begin() as conn:
-        # Создаем таблицы если их нету
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+async def connect(recreate: bool = False) -> None:
+    if recreate:
+        async with engine.begin() as conn:
+            # Создаем таблицы если их нету
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
     Session.configure(bind=engine)
 
 
