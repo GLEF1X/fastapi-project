@@ -24,8 +24,8 @@ class APIS(containers.DeclarativeContainer):
 
     qiwi = providers.Factory(
         glQiwiApi.QiwiWrapper,
-        api_access_token=config.TOKEN,
-        secret_p2p=config.SECRET
+        api_access_token=config.QIWI_TOKEN,
+        secret_p2p=config.QIWI_SECRET
     )
 
 
@@ -34,9 +34,9 @@ class Application(containers.DeclarativeContainer):
 
     apis = providers.Container(
         APIS,
-        config=config
+        config=config.apis
     )
     services = providers.Container(
         Services,
-        config=config
+        config=config.services
     )
