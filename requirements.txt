@@ -17,3 +17,6 @@ environs
 uvloop
 git+https://github.com/ageekinside/fastapi-jinja
 sqlalchemy
+aioredis
+dependency-injector
+glQiwiApi

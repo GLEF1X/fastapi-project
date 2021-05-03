@@ -1,22 +1,14 @@
 import fastapi_jinja
 import uvicorn
-from fastapi import FastAPI
 
-import services
+from api import endpoints, application, api_router
 from data import config
+from services import connect
+from services.redis.containers import Application
+from services.utils.other import setup_application
 from views import home
-from api.main import api_router
 
-api_kwargs = {
-    'debug': True,
-    'title': config.APP_NAME,
-    'version': config.API_VERSION,
-    'docs_url': config.DOCS_URL,
-    'redoc_url': config.REDOC_URL,
-    'openapi_url': config.OPEN_API_ROOT if not config.IS_PRODUCTION else None
-}
-
-app = FastAPI(**api_kwargs)
+app = setup_application()
 
 
 def main():
@@ -26,6 +18,7 @@ def main():
 
 def configure() -> None:
     configure_templates()
+    configure_dependency_injector()
     configure_routes()
 
 
@@ -38,9 +31,26 @@ def configure_routes() -> None:
     app.include_router(api_router, include_in_schema=True)
 
 
+def configure_dependency_injector():
+    container = Application()
+    container.config.from_dict(
+        {
+            "services": {
+                "REDIS_PASSWORD": config.REDIS_PASSWORD,
+                "REDIS_HOST": config.REDIS_HOST
+            },
+            "apis": {
+                "QIWI_TOKEN": config.QIWI_API_TOKEN,
+                "QIWI_SECRET": config.QIWI_SECRET
+            }
+        }
+    )
+    container.wire(packages=[endpoints], modules=[application])
+
+
 @app.on_event('startup')
 async def on_startup():
-    await services.connect()
+    await connect()
 
 
 if __name__ == '__main__':

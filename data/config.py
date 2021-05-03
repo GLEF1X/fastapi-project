@@ -23,7 +23,6 @@ DB_HOST: typing.Optional[str] = env.str("DB_HOST")
 DB_NAME: typing.Optional[str] = env.str("DB_NAME")
 CONNECTION_URL = f'postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}'
 
-
 # FastApi config
 APP_NAME: typing.Optional[str] = env.str("APP_NAME")
 API_VERSION: typing.Optional[str] = env.str("API_VERSION")
@@ -34,6 +33,14 @@ OPEN_API_ROOT: typing.Optional[str] = env.str("DEFAULT_OPEN_API_ROOT")
 IS_PRODUCTION: typing.Optional[bool] = env.bool("IS_PRODUCTION")
 
 TEMPLATES_DIR = str(BASE_DIR / "templates")
+
+# Redis config
+REDIS_HOST: str = env.str("REDIS_HOST")
+REDIS_PASSWORD: str = env.str("REDIS_PASSWORD")
+
+# Qiwi Config
+QIWI_SECRET: str = env.str("QIWI_SECRET")
+QIWI_API_TOKEN: str = env.str("QIWI_API_TOKEN")
 
 __all__ = (
     'BASE_DIR',
@@ -50,5 +57,11 @@ __all__ = (
     'DOCS_URL',
     'REDOC_URL',
     # Special variables
-    'IS_PRODUCTION'
+    'IS_PRODUCTION',
+    # Redis conf
+    'REDIS_HOST',
+    'REDIS_PASSWORD',
+    # Qiwi conf
+    "QIWI_SECRET",
+    "QIWI_API_TOKEN"
 )
