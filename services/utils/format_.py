@@ -3,8 +3,6 @@ from typing import Union, List, Any, Type
 
 from pydantic import BaseModel
 
-from services.db import User
-
 
 def into_complex_obj(
         lst_of_objects: Union[List[Union[dict, str]], dict],
@@ -14,7 +12,7 @@ def into_complex_obj(
     Parse simple objects, which cant raise ValidationError
 
     :param lst_of_objects: usually its response.response_data
-    :param model: pydantic model, which will parse data
+    :param model: pydantic model, which will parse core
     """
     objects = []
     for obj in lst_of_objects:

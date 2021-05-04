@@ -2,32 +2,27 @@ from typing import Optional
 
 import fastapi.responses
 from dependency_injector.wiring import inject, Provide
-from fastapi import Header, Body, Depends
+from fastapi import Header, Depends
 
 from api.application import api_router
+from api.config import PRODUCT_BODY
 from services.db.crud import ProductRepository
 from services.dependencies.containers import Application
 from services.misc import DefaultResponse
 from services.misc.schemas import Product, User
 from services.utils.responses import bad_response
-from services.utils.security import get_current_user
 
 
 @api_router.put("/products/create", tags=["Product"],
                 responses={400: {"model": DefaultResponse}}, status_code=201)
 @inject
 async def create_product(
-        product: Product = Body(..., example={
-            "name": "Apple MacBook 15",
-            "unit_price": 7000,
-            "description": "Light and fast laptop",
-            "size": "S"
-        }),
+        user: User,
+        product: Product = PRODUCT_BODY,
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         product_crud: ProductRepository = Depends(
             Provide[Application.services.user_repository]
         ),
-        user: User = Depends(get_current_user)
 ):
     """
     Create an item with all the information:

@@ -42,6 +42,32 @@ REDIS_PASSWORD: str = env.str("REDIS_PASSWORD")
 QIWI_SECRET: str = env.str("QIWI_SECRET")
 QIWI_API_TOKEN: str = env.str("QIWI_API_TOKEN")
 
+# Специальные настройки тегов для API
+tags_metadata = [
+    {
+        "name": "Users",
+        "description": "Operations with users. The **login** logic is also here."
+    },
+    {
+        "name": "Test",
+        "description": "Test queries"
+    },
+    {
+        "name": "Product",
+        "description": "Operations with products."
+    }
+]
+# Настройки приложения FastAPI
+api_kwargs = {
+    'debug': True,
+    'title': APP_NAME,
+    'version': API_VERSION,
+    'docs_url': DOCS_URL,
+    'redoc_url': REDOC_URL,
+    'openapi_url': OPEN_API_ROOT if not IS_PRODUCTION else None,
+    'openapi_tags': tags_metadata
+}
+
 __all__ = (
     'BASE_DIR',
     'TEMPLATES_DIR',
@@ -56,6 +82,7 @@ __all__ = (
     'API_VERSION',
     'DOCS_URL',
     'REDOC_URL',
+    'api_kwargs',
     # Special variables
     'IS_PRODUCTION',
     # Redis conf

@@ -1,19 +1,19 @@
 from typing import Optional, List
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import Header, Body, Path, HTTPException, Depends
+from fastapi import Header, Path, HTTPException, Depends
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from api.application import api_router
-from api.config import DETAIL_RESPONSES
+from api.config import DETAIL_RESPONSES, USER_BODY
 from services.db.crud import UserRepository
 from services.db.exceptions import UnableToDelete
 from services.dependencies.containers import Application
 from services.misc import User, DefaultResponse
 from services.misc.schemas import ObjectCount, SimpleResponse
 from services.utils.responses import bad_response, not_found
-from services.utils.security import get_password_hash, get_current_user
+from services.utils.security import get_current_user
 
 
 @api_router.get("/users/{user_id}/info", response_model=User,
@@ -21,11 +21,11 @@ from services.utils.security import get_password_hash, get_current_user
 @inject
 async def get_user_info(
         user_id: int,
+        user: User = Depends(get_current_user),
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
         ),
-        user: User = Depends(get_current_user)
 ):
     if not user_agent:
         return bad_response()
@@ -40,11 +40,11 @@ async def get_user_info(
                 responses={400: {"model": DefaultResponse}}, tags=["Users"])
 @inject
 async def get_all_users(
+        user: User = Depends(get_current_user),
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
         ),
-        user: User = Depends(get_current_user)
 ):
     if not user_agent:
         return bad_response()
@@ -56,15 +56,7 @@ async def get_all_users(
                 tags=["Users"])
 @inject
 async def create_user(
-        us: User = Body(..., example={
-            "first_name": "Gleb",
-            "last_name": "Garanin",
-            "username": "GLEF1X",
-            "phone_number": "+7900232132",
-            "email": "glebgar567@gmail.com",
-            "password": "qwerty12345",
-            "balance": 5
-        }),
+        us: User = USER_BODY,
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
@@ -74,9 +66,6 @@ async def create_user(
     if not user_agent:
         return bad_response()
     payload = us.dict(exclude_unset=True)
-    payload.update(
-        {"hashed_password": get_password_hash(us.password)}
-    )
     try:
         await user_repository.add(**payload)
     except IntegrityError:
@@ -93,10 +82,10 @@ async def create_user(
 @inject
 async def get_users_count(
         user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user: User = Depends(get_current_user),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
         ),
-        user: User = Depends(get_current_user)
 ):
     if not user_agent:
         return bad_response()
@@ -110,11 +99,11 @@ async def get_users_count(
 @inject
 async def delete_user(
         user_id: int = Path(...),
+        user: User = Depends(get_current_user),
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
         ),
-        user: User = Depends(get_current_user)
 ):
     if not user_agent:
         return bad_response()

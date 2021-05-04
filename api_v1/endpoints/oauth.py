@@ -12,7 +12,7 @@ from services.utils.security import authenticate_user, \
     ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 
 
-@api_router.post("/oauth", tags=["Test"])
+@api_router.post("/oauth", tags=["Test"], dependencies=None)
 @inject
 async def login(
         form_data: OAuth2PasswordRequestForm = Depends(),

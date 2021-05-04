@@ -1,12 +1,11 @@
 import contextlib
 import typing
 
-from sqlalchemy import insert, func, delete
+from sqlalchemy import insert, func, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from . import UnableToDelete
-from .models import *
+from . import User, Product, UnableToDelete
 
 
 class UserRepository:
@@ -20,6 +19,7 @@ class UserRepository:
         self.session_factory = session_factory
 
     async def add(self, **kwargs: typing.Any) -> User:
+        from services.utils.security import get_password_hash
         async with self.session_factory() as session:
             async with session.begin():
                 session: AsyncSession
@@ -29,6 +29,10 @@ class UserRepository:
                 result = (await session.execute(
                     query_insert
                 )).first()
+                query_update = update(User).where(
+                    User.id == result.id
+                ).values(hashed_password=get_password_hash(result.password))
+                await session.execute(query_update)
         return result
 
     async def select(

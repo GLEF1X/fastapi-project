@@ -23,7 +23,7 @@ class User(Base):
     balance = sa.Column(sa.DECIMAL, default=0, server_default='0')
     username = sa.Column(sa.VARCHAR(70), nullable=False, unique=True,
                          index=True)
-    hashed_password = sa.Column(sa.Text, nullable=False, unique=True)
+    hashed_password = sa.Column(sa.Text, nullable=True, unique=True)
 
     __mapper_args__ = {"eager_defaults": True}
 
@@ -94,4 +94,6 @@ class Order(Base):
 #         # print(user)
 #         print(result.scalar())
 
-__all__ = ('User', 'Order', 'Product', 'SizeEnum')
+__all__ = (
+    'User', 'Order', 'Product', 'SizeEnum'
+)

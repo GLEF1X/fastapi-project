@@ -1,4 +1,4 @@
-import glQiwiApi
+from glQiwiApi import QiwiWrapper
 from dependency_injector import containers, providers
 
 from . import redis, services
@@ -39,7 +39,7 @@ class APIS(containers.DeclarativeContainer):
     config = providers.Configuration()
 
     qiwi = providers.Factory(
-        glQiwiApi.QiwiWrapper,
+        QiwiWrapper,
         api_access_token=config.QIWI_TOKEN,
         secret_p2p=config.QIWI_SECRET
     )

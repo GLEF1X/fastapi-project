@@ -15,9 +15,9 @@ api_router = APIRouter(prefix="/api/v1")
 @api_router.get("/test", tags=["Test"], response_model=TestResponse)
 @inject
 async def test(
+        user: User = Depends(get_current_user),
         user_agent: Optional[str] = Header(...),
         service: RedisService = Depends(Provide[Application.services.redis_]),
-        user: User = Depends(get_current_user)
 ):
     """ Test query """
     value = await service.cache_process('cached_', 1, expire=40)

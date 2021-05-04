@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Any, Union
+from typing import Optional, Union
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import HTTPException, Depends
@@ -9,23 +9,27 @@ from passlib.context import CryptContext
 from pydantic import ValidationError
 from starlette import status
 
-from services.db.crud import UserRepository
-from services.dependencies.containers import Application
-from services.misc import TokenData, User
+from ..db.crud import UserRepository
+from ..dependencies.containers import Application
+from ..misc import TokenData, User
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/oauth")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api_v1/v1/oauth")
 
 SECRET_KEY = "d9721f6c989b5165f273e6c78bdbc67b169097095023118bd7709ec2b613868c"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
+
+def verify_password(
+        plain_password: str,
+        hashed_password: str
+):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def get_password_hash(password: str) -> Any:
+def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
@@ -86,10 +90,9 @@ async def authenticate_user(username: str, password: str,
 
 __all__ = (
     'oauth2_scheme',
-    'verify_password',
-    'get_password_hash',
     'get_current_user',
     'authenticate_user',
     'ACCESS_TOKEN_EXPIRE_MINUTES',
-    'create_access_token'
+    'create_access_token',
+    'get_password_hash'
 )

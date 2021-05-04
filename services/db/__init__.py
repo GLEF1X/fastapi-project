@@ -1,5 +1,11 @@
-# from .base import connect
+from .base import Database
 from .exceptions import UnableToDelete
-from .models import User, Order, Product
+from .models import User, Product, Order
 
-# __all__ = ('User', 'Order', 'Product', 'connect', 'UnableToDelete')
+__all__ = (
+    "UnableToDelete",
+    "User",
+    "Product",
+    "Order",
+    "Database"
+)

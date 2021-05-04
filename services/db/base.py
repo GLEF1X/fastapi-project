@@ -6,7 +6,7 @@ import sqlalchemy.ext.declarative
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from data.config import CONNECTION_URL
+from core.config import settings
 
 Base = sa.ext.declarative.declarative_base()
 
@@ -18,7 +18,8 @@ class Database:
         Initialize a sqlalchemy engine and session factory
         :param connection_url: url to establish a connection with db
         """
-        connection_url = connection_url if connection_url else CONNECTION_URL
+        if not isinstance(connection_url, str):
+            connection_url = settings.CONNECTION_URL
         self._engine = create_async_engine(connection_url, echo=False,
                                            pool_size=40,
                                            max_overflow=0)
