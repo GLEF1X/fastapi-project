@@ -3,11 +3,13 @@ from typing import Optional
 from starlette.responses import JSONResponse
 
 
-def bad_response() -> JSONResponse:
+def bad_response(msg: Optional[str] = None) -> JSONResponse:
+    msg = msg if isinstance(msg,
+                            str) else "You didnt pass User-Agent in headers"
     return JSONResponse(
         status_code=400,
         content={
-            "error": "You didnt pass User-Agent in headers",
+            "error": msg,
             "success": False
         }
     )

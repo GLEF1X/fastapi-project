@@ -1,6 +1,7 @@
 import datetime
 from typing import Optional, Any, Union
 
+from dependency_injector.wiring import Provide, inject
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -8,7 +9,8 @@ from passlib.context import CryptContext
 from pydantic import ValidationError
 from starlette import status
 
-from services.db import crud
+from services.db.crud import UserRepository
+from services.dependencies.containers import Application
 from services.misc import TokenData, User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -41,7 +43,13 @@ def create_access_token(
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+@inject
+async def get_current_user(
+        token: str = Depends(oauth2_scheme),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        )
+) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -57,7 +65,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         raise credentials_exception
     try:
         user = User.from_orm(
-            await crud.select_user(username=token_data.username)
+            await user_repository.select(username=token_data.username)
         )
         if user is None:
             raise ValidationError
@@ -66,8 +74,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     return user
 
 
-async def authenticate_user(username: str, password: str) -> Union[bool, User]:
-    user = await crud.select_user(username=username)
+async def authenticate_user(username: str, password: str,
+                            crud: UserRepository) -> Union[bool, User]:
+    user = await crud.select(username=username)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):

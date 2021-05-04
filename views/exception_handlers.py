@@ -26,3 +26,14 @@ async def request_exception_handler(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
     )
+
+
+async def http_401_exception_handler(request: Request,
+                                     exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content=jsonable_encoder({
+            "message": "Invalid token.",
+            "detail": exc.detail
+        })
+    )

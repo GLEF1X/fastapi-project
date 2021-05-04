@@ -3,16 +3,17 @@ from typing import Optional, List
 from dependency_injector.wiring import Provide, inject
 from fastapi import Header, Body, Path, HTTPException, Depends
 from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError
 
 from api.application import api_router
 from api.config import DETAIL_RESPONSES
-from services.db import UnableToDelete
 from services.db.crud import UserRepository
+from services.db.exceptions import UnableToDelete
 from services.dependencies.containers import Application
 from services.misc import User, DefaultResponse
 from services.misc.schemas import ObjectCount, SimpleResponse
 from services.utils.responses import bad_response, not_found
-from services.utils.security import get_password_hash
+from services.utils.security import get_password_hash, get_current_user
 
 
 @api_router.get("/users/{user_id}/info", response_model=User,
@@ -23,7 +24,8 @@ async def get_user_info(
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
-        )
+        ),
+        user: User = Depends(get_current_user)
 ):
     if not user_agent:
         return bad_response()
@@ -36,11 +38,13 @@ async def get_user_info(
 
 @api_router.get("/users/all", response_model=List[User],
                 responses={400: {"model": DefaultResponse}}, tags=["Users"])
+@inject
 async def get_all_users(
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
-        )
+        ),
+        user: User = Depends(get_current_user)
 ):
     if not user_agent:
         return bad_response()
@@ -50,6 +54,7 @@ async def get_all_users(
 
 @api_router.put('/users/create', responses={400: {"model": DefaultResponse}},
                 tags=["Users"])
+@inject
 async def create_user(
         us: User = Body(..., example={
             "first_name": "Gleb",
@@ -72,7 +77,10 @@ async def create_user(
     payload.update(
         {"hashed_password": get_password_hash(us.password)}
     )
-    await user_repository.add(**payload)
+    try:
+        await user_repository.add(**payload)
+    except IntegrityError:
+        return bad_response("A user with such data is already registered.")
 
     return {"success": True, "User-Agent": user_agent}
 
@@ -82,11 +90,13 @@ async def create_user(
                  response_model=ObjectCount,
                  tags=["Users"],
                  summary="Return count of users in database")
+@inject
 async def get_users_count(
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
-        )
+        ),
+        user: User = Depends(get_current_user)
 ):
     if not user_agent:
         return bad_response()
@@ -97,12 +107,14 @@ async def get_users_count(
                    response_description="return nothing",
                    tags=["Users"], summary="Delete user from db",
                    response_model=SimpleResponse)
+@inject
 async def delete_user(
         user_id: int = Path(...),
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
-        )
+        ),
+        user: User = Depends(get_current_user)
 ):
     if not user_agent:
         return bad_response()

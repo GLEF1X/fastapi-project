@@ -1,12 +1,11 @@
-from typing import Tuple
-
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
-from fastapi.security import OAuth2PasswordBearer
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from data import config
+from middlewares.process_time_middleware import add_process_time_header
 from views.exception_handlers import http_405_exception_handler, \
-    request_exception_handler
+    request_exception_handler, http_401_exception_handler
 
 tags_metadata = [
     {
@@ -37,6 +36,8 @@ api_kwargs = {
 def setup_application() -> FastAPI:
     app = FastAPI(**api_kwargs, exception_handlers={
         405: http_405_exception_handler,
-        RequestValidationError: request_exception_handler
+        RequestValidationError: request_exception_handler,
+        401: http_401_exception_handler
     })
+    app.add_middleware(BaseHTTPMiddleware, dispatch=add_process_time_header)
     return app

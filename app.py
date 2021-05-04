@@ -7,6 +7,7 @@ from api import endpoints, application, api_router
 from data import config
 from services.db.base import Database
 from services.dependencies.containers import Application
+from services.utils import security
 from services.utils.api_installation import setup_application
 from views import home
 
@@ -47,7 +48,7 @@ def configure_dependency_injector():
             }
         }
     )
-    container.wire(packages=[endpoints], modules=[application])
+    container.wire(packages=[endpoints], modules=[application, security])
 
 
 @app.on_event('startup')
