@@ -19,7 +19,10 @@ class User(Base):
     last_name = sa.Column(sa.VARCHAR(100), unique=False, index=True)
     phone_number = sa.Column(sa.Text, unique=False, index=True)
     email = sa.Column(sa.VARCHAR(70), unique=True)
+    password = sa.Column(sa.Text, unique=False)
     balance = sa.Column(sa.DECIMAL, default=0, server_default='0')
+    username = sa.Column(sa.VARCHAR(70), nullable=False)
+    hashed_password = sa.Column(sa.Text, nullable=False, unique=True)
 
     __mapper_args__ = {"eager_defaults": True}
 

@@ -1,5 +1,8 @@
+from typing import Tuple
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.security import OAuth2PasswordBearer
 
 from data import config
 from views.exception_handlers import http_405_exception_handler, \

@@ -2,6 +2,8 @@ import glQiwiApi
 from dependency_injector import containers, providers
 
 from . import redis, services
+from ..db.base import Database
+from ..db.crud import UserRepository, ProductRepository
 
 
 class Services(containers.DeclarativeContainer):
@@ -16,6 +18,20 @@ class Services(containers.DeclarativeContainer):
     redis_ = providers.Factory(
         services.RedisService,
         redis=redis_pool,
+    )
+
+    db = providers.Singleton(
+        Database
+    )
+
+    user_repository = providers.Factory(
+        UserRepository,
+        session_factory=db.provided.session
+    )
+
+    product_repository = providers.Factory(
+        ProductRepository,
+        session_factory=db.provided.session
     )
 
 

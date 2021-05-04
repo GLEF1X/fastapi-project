@@ -19,7 +19,9 @@ class User(BaseModel):
     email: Optional[str] = Field(default=None, title="Адрес электронной почты",
                                  example="glebgar567@gmail.com")
     balance: float
+    password: str = Field(..., example="qwerty12345")
     id: Optional[int] = None
+    username: str = Field(..., example="GLEF1X")
 
     @validator("email")
     def validate_em(cls, v: ...) -> Union[str, NoReturn]:
@@ -73,3 +75,12 @@ class TestResponse(BaseModel):
     success: bool = True
     user_agent: Optional[str] = Field(..., alias="User-Agent")
     value: int
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
