@@ -1,14 +1,15 @@
 from typing import Optional
 
 import fastapi.responses
-from dependency_injector.wiring import inject
-from fastapi import Header, Body
+from dependency_injector.wiring import inject, Provide
+from fastapi import Header, Body, Depends
 
 from api.application import api_router
-from services.db import crud
+from services.db.crud import ProductRepository
+from services.dependencies.containers import Application
 from services.misc import DefaultResponse
-from services.misc.pydantic_models import Product
-from services.utils.response_validation import bad_response
+from services.misc.schemas import Product
+from services.utils.responses import bad_response
 
 
 @api_router.put("/products/create", tags=["Product"],
@@ -22,6 +23,9 @@ async def create_product(
             "size": "S"
         }),
         user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user_repository: ProductRepository = Depends(
+            Provide[Application.services.user_repository]
+        )
 ):
     """
     Create an item with all the information:
@@ -33,7 +37,7 @@ async def create_product(
     """
     if not user_agent:
         return bad_response()
-    await crud.add_product(**product.dict(exclude_unset=True))
+    await user_repository.add(**product.dict(exclude_unset=True))
     return fastapi.responses.Response(status_code=201,
                                       headers={
                                           "User-Agent": user_agent

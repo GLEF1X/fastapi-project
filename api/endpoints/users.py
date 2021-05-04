@@ -1,24 +1,33 @@
 from typing import Optional, List
 
-from fastapi import Header, Body, Path, HTTPException
+from dependency_injector.wiring import Provide, inject
+from fastapi import Header, Body, Path, HTTPException, Depends
 from pydantic import ValidationError
 
 from api.application import api_router
 from api.config import DETAIL_RESPONSES
-from services.db import crud, UnableToDelete
+from services.db import UnableToDelete
+from services.db.crud import UserRepository
+from services.dependencies.containers import Application
 from services.misc import User, DefaultResponse
-from services.misc.pydantic_models import ObjectCount, SimpleResponse
-from services.utils.response_validation import not_found, bad_response
+from services.misc.schemas import ObjectCount, SimpleResponse
+from services.utils.responses import bad_response, not_found
+from services.utils.security import get_password_hash
 
 
 @api_router.get("/users/{user_id}/info", response_model=User,
                 responses=DETAIL_RESPONSES, tags=["Users"])
+@inject
 async def get_user_info(
         user_id: int,
-        user_agent: Optional[str] = Header(None, title="User-Agent")):
+        user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        )
+):
     if not user_agent:
         return bad_response()
-    entry = await crud.select_user(user_id=user_id)
+    entry = await user_repository.select(user_id=user_id)
     try:
         return User.from_orm(entry)
     except ValidationError:
@@ -28,10 +37,14 @@ async def get_user_info(
 @api_router.get("/users/all", response_model=List[User],
                 responses={400: {"model": DefaultResponse}}, tags=["Users"])
 async def get_all_users(
-        user_agent: Optional[str] = Header(None, title="User-Agent")):
+        user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        )
+):
     if not user_agent:
         return bad_response()
-    users = await crud.get_all_users()
+    users = await user_repository.select_all()
     return users
 
 
@@ -41,16 +54,25 @@ async def create_user(
         us: User = Body(..., example={
             "first_name": "Gleb",
             "last_name": "Garanin",
+            "username": "GLEF1X",
             "phone_number": "+7900232132",
             "email": "glebgar567@gmail.com",
+            "password": "qwerty12345",
             "balance": 5
         }),
-        user_agent: Optional[str] = Header(None, title="User-Agent")
+        user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        )
 ):
     """*Create a new user in database"""
     if not user_agent:
         return bad_response()
-    await crud.add_user(**us.dict(exclude_unset=True))
+    payload = us.dict(exclude_unset=True)
+    payload.update(
+        {"hashed_password": get_password_hash(us.password)}
+    )
+    await user_repository.add(**payload)
 
     return {"success": True, "User-Agent": user_agent}
 
@@ -61,11 +83,14 @@ async def create_user(
                  tags=["Users"],
                  summary="Return count of users in database")
 async def get_users_count(
-        user_agent: Optional[str] = Header(None, title="User-Agent")
+        user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        )
 ):
     if not user_agent:
         return bad_response()
-    return {"count": await crud.count_users()}
+    return {"count": await user_repository.count()}
 
 
 @api_router.delete("/users/{user_id}/delete",
@@ -75,11 +100,14 @@ async def get_users_count(
 async def delete_user(
         user_id: int = Path(...),
         user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        )
 ):
     if not user_agent:
         return bad_response()
     try:
-        await crud.delete_user(user_id)
+        await user_repository.delete(user_id)
     except UnableToDelete:
         raise HTTPException(
             status_code=400,
