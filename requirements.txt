@@ -20,3 +20,6 @@ sqlalchemy
 aioredis
 dependency-injector
 glQiwiApi
+passlib
+bcrypt
+python-jose

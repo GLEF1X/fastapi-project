@@ -1,11 +1,13 @@
+from typing import Any
+
 import fastapi_jinja
 import uvicorn
 
 from api import endpoints, application, api_router
 from data import config
-from services import connect
-from services.redis.containers import Application
-from services.utils.other import setup_application
+from services.db.base import Database
+from services.dependencies.containers import Application
+from services.utils.api_installation import setup_application
 from views import home
 
 app = setup_application()
@@ -49,8 +51,9 @@ def configure_dependency_injector():
 
 
 @app.on_event('startup')
-async def on_startup():
-    await connect()
+async def on_startup() -> Any:
+    db = Database()
+    await db.create_database()
 
 
 if __name__ == '__main__':
