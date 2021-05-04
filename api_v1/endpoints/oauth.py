@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 
-from api import api_router
+from api_v1 import api_router
 from services.db.crud import UserRepository
 from services.dependencies.containers import Application
 from services.utils.security import authenticate_user, \

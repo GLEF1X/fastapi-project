@@ -3,8 +3,8 @@ from typing import Any
 import fastapi_jinja
 import uvicorn
 
-from api import endpoints, application, api_router
-from data import config
+from api_v1 import endpoints, application, api_router
+from core.config import settings
 from services.db.base import Database
 from services.dependencies.containers import Application
 from services.utils import security
@@ -26,7 +26,7 @@ def configure() -> None:
 
 
 def configure_templates() -> None:
-    fastapi_jinja.global_init(config.TEMPLATES_DIR)
+    fastapi_jinja.global_init(settings.TEMPLATES_DIR)
 
 
 def configure_routes() -> None:
@@ -39,12 +39,12 @@ def configure_dependency_injector():
     container.config.from_dict(
         {
             "services": {
-                "REDIS_PASSWORD": config.REDIS_PASSWORD,
-                "REDIS_HOST": config.REDIS_HOST
+                "REDIS_PASSWORD": settings.REDIS_PASSWORD,
+                "REDIS_HOST": settings.REDIS_HOST
             },
             "apis": {
-                "QIWI_TOKEN": config.QIWI_API_TOKEN,
-                "QIWI_SECRET": config.QIWI_SECRET
+                "QIWI_TOKEN": settings.QIWI_API_TOKEN,
+                "QIWI_SECRET": settings.QIWI_SECRET
             }
         }
     )

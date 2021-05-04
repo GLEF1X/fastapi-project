@@ -5,8 +5,8 @@ from fastapi import Header, Path, HTTPException, Depends
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from api.application import api_router
-from api.config import DETAIL_RESPONSES, USER_BODY
+from api_v1.application import api_router
+from core.config import settings
 from services.db.crud import UserRepository
 from services.db.exceptions import UnableToDelete
 from services.dependencies.containers import Application
@@ -16,8 +16,7 @@ from services.utils.responses import bad_response, not_found
 from services.utils.security import get_current_user
 
 
-@api_router.get("/users/{user_id}/info", response_model=User,
-                responses=DETAIL_RESPONSES, tags=["Users"])
+@api_router.get("/users/{user_id}/info", response_model=User, tags=["Users"])
 @inject
 async def get_user_info(
         user_id: int,
@@ -56,7 +55,7 @@ async def get_all_users(
                 tags=["Users"])
 @inject
 async def create_user(
-        us: User = USER_BODY,
+        us: User = settings.USER_BODY,
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
@@ -69,7 +68,7 @@ async def create_user(
     try:
         await user_repository.add(**payload)
     except IntegrityError:
-        return bad_response("A user with such data is already registered.")
+        return bad_response("A user with such core is already registered.")
 
     return {"success": True, "User-Agent": user_agent}
 
