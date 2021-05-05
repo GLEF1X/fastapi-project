@@ -11,7 +11,6 @@ from services.utils.security import get_current_user
 api_router = APIRouter(prefix="/api_v1/v1")
 
 
-@api_router.post("/test", tags=["Test"], response_model=TestResponse)
 @api_router.get("/test", tags=["Test"], response_model=TestResponse)
 @inject
 async def test(

@@ -58,8 +58,9 @@ class Product(Base):
 class Order(Base):
     """Таблица заказов"""
     __tablename__ = 'orders'
-    order_id = sa.Column(sa.Integer, sa.Identity(), primary_key=True)
+    id = sa.Column(sa.Integer, sa.Identity(), primary_key=True)
     product_id = sa.Column(sa.SmallInteger, sa.ForeignKey('products.id'))
+    user_id = sa.Column(sa.SmallInteger, sa.ForeignKey('users.id'))
     quantity = sa.Column(sa.SmallInteger, default=1)
     created_at = sa.Column(sa.DateTime, default=sa.func.now())
 

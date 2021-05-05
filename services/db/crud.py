@@ -6,9 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from . import User, Product, UnableToDelete
+from ..abstracts import BaseRepository
 
 
-class UserRepository:
+class UserRepository(BaseRepository):
 
     def __init__(
             self,
@@ -84,7 +85,7 @@ class UserRepository:
                 raise UnableToDelete()
 
 
-class ProductRepository:
+class ProductRepository(BaseRepository):
 
     def __init__(
             self,

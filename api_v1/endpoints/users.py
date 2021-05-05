@@ -1,11 +1,10 @@
 from typing import Optional, List
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import Header, Path, HTTPException, Depends
+from fastapi import Header, Path, HTTPException, Depends, APIRouter
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from api_v1.application import api_router
 from core.config import settings
 from services.db.crud import UserRepository
 from services.db.exceptions import UnableToDelete
@@ -14,6 +13,8 @@ from services.misc import User, DefaultResponse
 from services.misc.schemas import ObjectCount, SimpleResponse
 from services.utils.responses import bad_response, not_found
 from services.utils.security import get_current_user
+
+api_router = APIRouter()
 
 
 @api_router.get("/users/{user_id}/info", response_model=User, tags=["Users"])

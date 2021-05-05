@@ -21,8 +21,8 @@ class Database:
         if not isinstance(connection_url, str):
             connection_url = settings.CONNECTION_URL
         self._engine = create_async_engine(connection_url, echo=False,
-                                           pool_size=40,
-                                           max_overflow=0)
+                                           pool_size=20,
+                                           max_overflow=60)
         self._session_factory = sessionmaker(bind=self._engine,
                                              expire_on_commit=False,
                                              class_=AsyncSession,

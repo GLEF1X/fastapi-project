@@ -54,6 +54,7 @@ class Settings(BaseSettings):
             host=values.get("DB_HOST"),
             path=f"/{values.get('DB_NAME') or ''}",
         )
+        # Get asyncpg+postgresql link to connect
         return sync_connection_url.replace("postgresql", "postgresql+asyncpg")
 
     # Специальные настройки тегов для API
@@ -73,15 +74,26 @@ class Settings(BaseSettings):
     ]
 
     # Настройки приложения FastAPI
-    api_kwargs: Dict[str, Any] = {
-        'debug': True,
-        'title': APP_NAME,
-        'version': API_VERSION,
-        'docs_url': DOCS_URL,
-        'redoc_url': REDOC_URL,
-        'openapi_url': OPEN_API_ROOT if not IS_PRODUCTION else None,
-        'openapi_tags': tags_metadata
-    }
+    api_kwargs: Optional[Dict[str, Any]] = None
+
+    @validator("api_kwargs", pre=True)
+    def set_api_kwargs(cls,
+                       v: Optional[Dict[str, Any]],
+                       values: Dict[str, Any]
+                       ) -> Union[dict, Dict[str, Optional[bool]]]:
+        if isinstance(v, dict):
+            return v
+        return {
+            'debug': True,
+            'title': values.get("APP_NAME"),
+            'version': values.get("API_VERSION"),
+            'docs_url': values.get("DOCS_URL"),
+            'redoc_url': values.get("REDOC_URL"),
+            'openapi_url': values.get("OPEN_API_ROOT") if not values.get(
+                "IS_PRODUCTION"
+            ) else "/openapi.json",
+            'openapi_tags': values.get("tags_metadata")
+        }
 
     PRODUCT_BODY: Any = Field(default=Body(..., example={
         "name": "Apple MacBook 15",
@@ -114,8 +126,10 @@ class Settings(BaseSettings):
         "http://localhost:8000",
     ]
 
+    ALLOWED_METHODS: List[str] = ["POST", "PUT", "DELETE", "GET"]
+
     class Config:
-        env_file = '.env'
+        env_file = ENV_PATH
         env_file_encoding = 'utf-8'
         extra = Extra.allow
 
