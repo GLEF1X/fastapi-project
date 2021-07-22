@@ -15,4 +15,4 @@ class RedisService:
         cached_value = await self._redis.get(key)
         if overwrite or not cached_value:
             await self._redis.set(key, value, expire=expire)
-        return cached_value if cached_value else value
+        return cached_value or value

@@ -8,7 +8,7 @@ from services.dependencies.services import RedisService
 from services.misc.schemas import TestResponse, User
 from services.utils.security import get_current_user
 
-api_router = APIRouter(prefix="/api_v1/v1")
+api_router = APIRouter(prefix="/api/v1")
 
 
 @api_router.get("/test", tags=["Test"], response_model=TestResponse)

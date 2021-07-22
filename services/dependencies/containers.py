@@ -1,5 +1,7 @@
-from glQiwiApi import QiwiWrapper
+import functools
+
 from dependency_injector import containers, providers
+from glQiwiApi import QiwiWrapper
 
 from . import redis, services
 from ..db.base import Database

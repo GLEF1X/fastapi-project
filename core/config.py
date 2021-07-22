@@ -126,8 +126,6 @@ class Settings(BaseSettings):
         "http://localhost:8000",
     ]
 
-    ALLOWED_METHODS: List[str] = ["POST", "PUT", "DELETE", "GET"]
-
     class Config:
         env_file = ENV_PATH
         env_file_encoding = 'utf-8'

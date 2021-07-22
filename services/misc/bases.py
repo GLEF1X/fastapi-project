@@ -1,14 +1,12 @@
 import abc
-from typing import NoReturn, Optional
+from typing import NoReturn
 
 import fastapi_jinja
 from fastapi import FastAPI
 
 
-class BaseAPIApplicationConfigBuilder(abc.ABC):
-
-    def __init__(self) -> None:
-        self.app: Optional[FastAPI] = None
+class BaseApplicationConfiguratorBuilder(abc.ABC):
+    app: FastAPI
 
     @abc.abstractmethod
     def configure_routes(self) -> NoReturn:
@@ -24,7 +22,7 @@ class BaseAPIApplicationConfigBuilder(abc.ABC):
     def configure_dependency_injector(self) -> NoReturn:
         """ Configure dependencies """
 
-    def configure_event_handlers(self) -> NoReturn:
+    def configure_events(self) -> NoReturn:
         """
         In this method you should to configure events like
         'shutdown' and 'startup'

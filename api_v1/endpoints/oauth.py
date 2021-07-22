@@ -13,7 +13,7 @@ from services.utils.security import authenticate_user, \
 api_router = APIRouter()
 
 
-@api_router.post("/oauth", tags=["Test"], dependencies=None)
+@api_router.post("/oauth", tags=["Test"])
 @inject
 async def login(
         form_data: OAuth2PasswordRequestForm = Depends(),

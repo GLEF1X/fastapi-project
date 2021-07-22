@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "fast_api_test"
+version = "0.1.0"
+description = ""
+authors = ["Gleb Garanin <glebgar567@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+ujson = "^4.0.2"
+fastapi = "^0.67.0"
+pydantic = "^1.8.2"
+email-validator = "^1.1.3"
+uvicorn = "^0.14.0"
+Jinja2 = "^3.0.1"
+PyYAML = "^5.4.1"
+python-multipart = "^0.0.5"
+graphene = "^2.1.9"
+glqiwiapi = "^1.0.3"
+asyncpg = "^0.23.0"
+loguru = "^0.5.3"
+environs = "^9.3.2"
+uvloop = "^0.15.3"
+SQLAlchemy = "^1.4.22"
+aioredis = "^1.3.1"
+dependency-injector = "^4.34.1"
+passlib = "^1.7.4"
+bcrypt = "^3.2.0"
+python-jose = "^3.3.0"
+fastapi_jinja = { git = "https://github.com/AGeekInside/fastapi-jinja.git", branch = "main"}
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
