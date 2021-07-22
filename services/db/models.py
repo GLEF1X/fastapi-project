@@ -66,34 +66,6 @@ class Order(Base):
     __mapper_args__ = {"eager_defaults": True}
 
 
-# async def ddl_test():
-#     async with Session.begin() as session:
-#         query_select = select(User).where(
-#             User.name == 'Gleb'
-#         ).order_by(desc('id')).having(User.balance <= 0).group_by(User.username, User.id)
-#         count_query = select(sa.func.count('*').label('users_count')).select_from(User)
-#         # result: CursorResult = await session.execute(
-#         #     insert(User),
-#         #     [
-#         #         {'name': 'Gleb', 'username': 'GLEF1X'},
-#         #         {'name': 'Sasha', 'balance': 10, 'username': 'S0mething'}
-#         #     ]
-#         # )
-#         # print(f'Inserting result {result}')
-#         result = await session.execute(query_select)
-#         # print((await session.execute(
-#         #     select(
-#         #         sa.func.now()
-#         #     ).compile(dialect=postgresql.dialect())))
-#         #       )
-#         print((await session.execute(select(sa.func.current_date()))).scalar())
-#         something = aliased(User, alias=result)
-#         print(something)
-#
-#         # user: User = result.scalars().first()
-#         # print(user)
-#         print(result.scalar())
-
 __all__ = (
     'User', 'Order', 'Product', 'SizeEnum'
 )

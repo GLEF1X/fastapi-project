@@ -27,6 +27,8 @@ passlib = "^1.7.4"
 bcrypt = "^3.2.0"
 python-jose = "^3.3.0"
 fastapi_jinja = { git = "https://github.com/AGeekInside/fastapi-jinja.git", branch = "main"}
+sqlalchemy2-stubs = "^0.0.2-alpha.4"
+sqlalchemy-stubs = "^0.4"
 
 [tool.poetry.dev-dependencies]
 

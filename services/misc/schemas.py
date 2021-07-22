@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Union, NoReturn, Any, Dict
+from typing import Optional, Union, NoReturn, Any, Dict, Type
 
 from email_validator import validate_email
 from pydantic import BaseModel, Field, validator
@@ -49,13 +49,7 @@ class Product(BaseModel):
             "description": "Light and fast laptop",
         }
         keep_untouched = ()
-
-    def dict(self, **kwargs) -> Dict[Any, Any]:
-        dct = super().dict(**kwargs)
-        dct.update(
-            {"size": dct.get("size").name}
-        )
-        return dct
+        use_enum_values = True
 
 
 class DefaultResponse(BaseModel):

@@ -7,7 +7,7 @@ from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
-from api_v1 import setup_routers, endpoints, application
+from api_v1 import setup_routers, endpoints, application, easy_endpoints
 from core.config import settings
 from middlewares.process_time_middleware import add_process_time_header
 from services.db import Database
@@ -93,7 +93,7 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
         )
         self._container.wire(
             packages=[endpoints],
-            modules=[application, security]
+            modules=[application, security, easy_endpoints]
         )
 
     def configure_events(self) -> NoReturn:
