@@ -18,6 +18,5 @@ async def test(
         user_agent: Optional[str] = Header(...),
         service: RedisService = Depends(Provide[Application.services.redis_]),
 ):
-    """ Test query """
     value = await service.cache_process('cached_', 1, expire=40)
     return {"success": True, "User-Agent": user_agent, "value": value}

@@ -5,8 +5,9 @@ from fastapi import Depends, HTTPException, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 
-from services.db.crud import UserRepository
+from services.database.repositories.user import UserRepository
 from services.dependencies.containers import Application
+from services.utils.exceptions import UserIsNotAuthenticated
 from services.utils.security import authenticate_user, \
     ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 
@@ -21,16 +22,14 @@ async def login(
             Provide[Application.services.user_repository]
         )
 ):
-    user = await authenticate_user(form_data.username, form_data.password,
-                                   user_crud)
-    if not user:
+    try:
+        user = await authenticate_user(form_data.username, form_data.password, user_crud)
+    except UserIsNotAuthenticated as ex:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from ex
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
+    access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}

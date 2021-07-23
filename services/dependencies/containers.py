@@ -1,11 +1,10 @@
-import functools
-
 from dependency_injector import containers, providers
 from glQiwiApi import QiwiWrapper
 
 from . import redis, services
-from ..db.base import Database
-from ..db.crud import UserRepository, ProductRepository
+from ..database.models.base import DatabaseComponents
+from ..database.repositories.product import ProductRepository
+from ..database.repositories.user import UserRepository
 
 
 class Services(containers.DeclarativeContainer):
@@ -22,28 +21,32 @@ class Services(containers.DeclarativeContainer):
         redis=redis_pool,
     )
 
-    db = providers.Singleton(
-        Database
-    )
+    db = providers.Singleton(DatabaseComponents,
+                             drivername="postgresql+asyncpg",
+                             username=config.DB_USER,
+                             password=config.DB_PASS,
+                             host=config.DB_HOST,
+                             database=config.DB_NAME)
 
-    user_repository = providers.Factory(
+    user_repository: providers.Provider[UserRepository] = providers.Factory(
         UserRepository,
-        session_or_pool=db.provided.session_factory
+        session_or_pool=db.provided.sessionmaker
     )
 
-    product_repository = providers.Factory(
+    product_repository: providers.Provider[ProductRepository] = providers.Factory(
         ProductRepository,
-        session_or_pool=db.provided.session_factory
+        session_or_pool=db.provided.sessionmaker
     )
 
 
 class APIS(containers.DeclarativeContainer):
     config = providers.Configuration()
 
-    qiwi = providers.Factory(
+    qiwi: providers.Provider[QiwiWrapper] = providers.Factory(
         QiwiWrapper,
         api_access_token=config.QIWI_TOKEN,
-        secret_p2p=config.QIWI_SECRET
+        secret_p2p=config.QIWI_SECRET,
+        phone_number=config.PHONE_NUMBER
     )
 
 

@@ -26,11 +26,13 @@ dependency-injector = "^4.34.1"
 passlib = "^1.7.4"
 bcrypt = "^3.2.0"
 python-jose = "^3.3.0"
-fastapi_jinja = { git = "https://github.com/AGeekInside/fastapi-jinja.git", branch = "main"}
-sqlalchemy2-stubs = "^0.0.2-alpha.4"
+fastapi_jinja = { git = "https://github.com/AGeekInside/fastapi-jinja.git", branch = "main" }
 sqlalchemy-stubs = "^0.4"
+mypy = { extras = ["plugin"], version = "^0.910" }
+sqlalchemy2-stubs = "^0.0.2-alpha.2"
 
 [tool.poetry.dev-dependencies]
+black = "^21.7b0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

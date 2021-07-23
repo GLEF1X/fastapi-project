@@ -1,6 +1,6 @@
-**API built on FastAPI**
+**API built with FastAPI**
 
 ### TODO:
 
 - Make own small dependency injector
-- Finish up Oauth2 authorization 
+- Finish up OAuth2 authorization 

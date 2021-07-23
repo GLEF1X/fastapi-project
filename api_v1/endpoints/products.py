@@ -4,11 +4,11 @@ import fastapi.responses
 from dependency_injector.wiring import inject, Provide
 from fastapi import Header, Depends, APIRouter
 
-from core.config import settings
-from services.db.crud import ProductRepository
+from services.database.repositories.product import ProductRepository
 from services.dependencies.containers import Application
 from services.misc import DefaultResponse
 from services.misc.schemas import Product, User
+from services.utils.endpoints_specs import ProductBodySpec
 from services.utils.responses import bad_response
 
 api_router = APIRouter()
@@ -19,7 +19,7 @@ api_router = APIRouter()
 @inject
 async def create_product(
         user: User,
-        product: Product = settings.PRODUCT_BODY,
+        product: Product = ProductBodySpec.item,
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         product_crud: ProductRepository = Depends(
             Provide[Application.services.user_repository]

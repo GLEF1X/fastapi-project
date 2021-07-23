@@ -5,12 +5,12 @@ from fastapi import Header, Path, HTTPException, Depends, APIRouter
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from core.config import settings
-from services.db.crud import UserRepository
-from services.db.exceptions import UnableToDelete
+from services.database.repositories.user import UserRepository
+from services.database.exceptions import UnableToDelete
 from services.dependencies.containers import Application
 from services.misc import User, DefaultResponse
 from services.misc.schemas import ObjectCount, SimpleResponse
+from services.utils.endpoints_specs import UserBodySpec
 from services.utils.responses import bad_response, not_found
 from services.utils.security import get_current_user
 
@@ -27,7 +27,7 @@ async def get_user_info(
 ):
     if not user_agent:
         return bad_response()
-    entry = await user_repository.select(user_id=user_id)
+    entry = await user_repository.select_one(user_repository.model.id == user_id)
     try:
         return User.from_orm(entry)
     except ValidationError:
@@ -54,7 +54,7 @@ async def get_all_users(
                 tags=["Users"])
 @inject
 async def create_user(
-        us: User = settings.USER_BODY,
+        user: User = UserBodySpec.item,
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
@@ -63,7 +63,7 @@ async def create_user(
     """*Create a new user in database"""
     if not user_agent:
         return bad_response()
-    payload = us.dict(exclude_unset=True)
+    payload = user.dict(exclude_unset=True)
     try:
         await user_repository.add(**payload)
     except IntegrityError:
@@ -92,7 +92,7 @@ async def get_users_count(
 
 @api_router.delete("/users/{user_id}/delete",
                    response_description="return nothing",
-                   tags=["Users"], summary="Delete user from db",
+                   tags=["Users"], summary="Delete user from database",
                    response_model=SimpleResponse)
 @inject
 async def delete_user(

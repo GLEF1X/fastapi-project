@@ -1,45 +1,15 @@
 import contextlib
 import typing
 from abc import ABC
-from typing import Optional, NoReturn
+from typing import cast
 
-import sqlalchemy as sa
-import sqlalchemy.ext.declarative
-from sqlalchemy import lambda_stmt, select, update, exists, delete
+from sqlalchemy import lambda_stmt, select, update, exists, delete, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSessionTransaction, AsyncSession
-from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql import Executable
 
-from core.config import settings
-
-Base = sa.ext.declarative.declarative_base()
-
-
-class Database:
-
-    def __init__(self, connection_url: Optional[str] = None):
-        """
-        Initialize a sqlalchemy engine and session factory
-        :param connection_url: url to establish a connection with db
-        """
-        if not isinstance(connection_url, str):
-            connection_url = settings.CONNECTION_URL
-        self._engine = create_async_engine(connection_url, echo=False,
-                                           pool_size=20,
-                                           max_overflow=60)
-        self.session_factory = sessionmaker(bind=self._engine,
-                                             expire_on_commit=False,
-                                             class_=AsyncSession)
-
-    async def create_database(self, drop_all: bool = False) -> NoReturn:
-        async with self._engine.begin() as conn:
-            conn: AsyncSession
-            if drop_all:
-                await conn.run_sync(Base.metadata.drop_all)
-            await conn.run_sync(Base.metadata.create_all)
-
+from services.database.models.base import ASTERISK
 
 Model = typing.TypeVar("Model")
 TransactionContext = typing.AsyncContextManager[AsyncSessionTransaction]
@@ -148,3 +118,8 @@ class BaseRepo(ABC, typing.Generic[Model]):
             stmt = delete(self.model).where(*clauses).returning("*")
             result = (await self.session.execute(stmt)).scalars().all()
         return typing.cast(typing.List[Model], result)
+
+    async def count(self) -> int:
+        async with self.transaction:
+            count = (await self.session.execute(func.count(ASTERISK))).scalars().first()
+        return cast(int, count)

@@ -1,15 +1,7 @@
-from core.config import settings
-from services.utils.api_installation import (
-    Director,
-    ApplicationConfiguratorBuilder
-)
+from services.utils.other.api_installation import Director, ApplicationConfiguratorBuilder
 
-director = Director(
-    ApplicationConfiguratorBuilder(),
-    templates_dir=settings.TEMPLATES_DIR
-)
-
-app = director.configure()
+director = Director(ApplicationConfiguratorBuilder())
 
 if __name__ == '__main__':
-    director.run()
+    director.configure()
+    director.run(debug=True, port=5000, log_level="info")

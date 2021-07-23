@@ -4,7 +4,7 @@ from typing import Optional, Union, NoReturn, Any, Dict, Type
 from email_validator import validate_email
 from pydantic import BaseModel, Field, validator
 
-from services.db.models import SizeEnum
+from services.database.models import SizeEnum
 
 
 class User(BaseModel):
@@ -24,7 +24,7 @@ class User(BaseModel):
     username: str = Field(..., example="GLEF1X")
 
     @validator("email")
-    def validate_em(cls, v: ...) -> Union[str, NoReturn]:
+    def validate_em(cls, v: Any) -> str:
         if not validate_email(v):
             raise ValueError("bad email format")
         return v
