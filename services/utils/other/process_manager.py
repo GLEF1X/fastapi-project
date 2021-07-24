@@ -31,12 +31,12 @@ class ProcessManager(Generic[_T]):
     """
 
     def __init__(
-            self,
-            func: Callable[[ValueProxy[_T], Any], ValueProxy[_T]],
-            default: _T,
-            ctype: Any,
-            args: tuple = (),
-            kwargs: Optional[Dict[Any, Any]] = None,
+        self,
+        func: Callable[[ValueProxy[_T], Any], ValueProxy[_T]],
+        default: _T,
+        ctype: Any,
+        args: tuple = (),
+        kwargs: Optional[Dict[Any, Any]] = None,
     ):
         self._target = func
         self._manager = Manager()
@@ -49,7 +49,9 @@ class ProcessManager(Generic[_T]):
     @property
     def process(self) -> CustomProcess:
         if not (process := self._process):
-            self._process = CustomProcess(target=self._wrap_func(), args=self._args, kwargs=self._kwargs)
+            self._process = CustomProcess(
+                target=self._wrap_func(), args=self._args, kwargs=self._kwargs
+            )
         return cast(CustomProcess, process or self._process)
 
     @property

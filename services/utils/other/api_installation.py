@@ -13,8 +13,8 @@ from api_v1.endpoints import testpoint
 from middlewares.process_time_middleware import add_process_time_header
 from services.database.models.base import DatabaseComponents
 from services.dependencies.containers import Application
-from services.utils.other.builder_base import BaseApplicationConfiguratorBuilder
 from services.utils import security
+from services.utils.other.builder_base import BaseApplicationConfiguratorBuilder
 from views import home
 from views.home import api_router
 
@@ -33,6 +33,8 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
     def __init__(self) -> None:
         super(ApplicationConfiguratorBuilder, self).__init__()
         self.app = FastAPI(**self._settings.fastapi.api_kwargs)
+        self.app.settings = self._settings
+
         self._openapi_schema: Optional[Dict[str, Any]] = None
         self._container = Application()
 
@@ -60,15 +62,14 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
 
         :return:
         """
-        self.app.add_middleware(BaseHTTPMiddleware,
-                                dispatch=add_process_time_header)
+        self.app.add_middleware(BaseHTTPMiddleware, dispatch=add_process_time_header)
         self.app.add_middleware(
             middleware_class=CORSMiddleware,
-            allow_origins=self._settings.fastapi.ALLOWED_ORIGINS,
+            allow_origins=self._settings.fastapi.BACKEND_CORS_ORIGINS,
             allow_credentials=True,
             allow_methods=ALLOWED_METHODS,
-            allow_headers=self._settings.fastapi.ALLOWED_HEADERS,
-            expose_headers=["User-Agent", "Authorization"]
+            allow_headers=self._settings.fastapi.BACKEND_CORS_ORIGINS,
+            expose_headers=["User-Agent", "Authorization"],
         )
 
     @no_type_check
@@ -86,19 +87,20 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
                     "DB_USER": self._settings.database.DB_USER,
                     "DB_PASS": self._settings.database.DB_PASS,
                     "DB_HOST": self._settings.database.DB_HOST,
-                    "DB_NAME": self._settings.database.DB_NAME
+                    "DB_NAME": self._settings.database.DB_NAME,
                 },
                 "apis": {
                     "QIWI_TOKEN": self._settings.api.QIWI_API_TOKEN,
                     "QIWI_SECRET": self._settings.api.QIWI_SECRET,
-                    "PHONE_NUMBER": self._settings.api.PHONE_NUMBER
-                }
+                    "PHONE_NUMBER": self._settings.api.PHONE_NUMBER,
+                },
             }
         )
         self._container.wire(
             packages=[endpoints],
-            modules=[testpoint, security, not_for_production, sys.modules[__name__]]
+            modules=[testpoint, security, not_for_production, sys.modules[__name__]],
         )
+        self.app.container = self._container
 
     def configure_events(self) -> None:
         self.app.add_event_handler("startup", on_startup)
@@ -139,4 +141,4 @@ class Director:
         uvicorn.run(self._builder.app, **kwargs)  # type: ignore
 
 
-__all__ = ('Director', 'ApplicationConfiguratorBuilder')
+__all__ = ("Director", "ApplicationConfiguratorBuilder")

@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Final
+from typing import Optional, Final, Dict, Any
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import HTTPException, Depends
@@ -17,7 +17,9 @@ from services.utils.exceptions import UserIsNotAuthenticated
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api_v1/v1/oauth")
 
-SECRET_KEY: Final[str] = "d9721f6c989b5165f273e6c78bdbc67b169097095023118bd7709ec2b613868c"
+SECRET_KEY: Final[
+    str
+] = "d9721f6c989b5165f273e6c78bdbc67b169097095023118bd7709ec2b613868c"
 ALGORITHM: Final[str] = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES: Final[int] = 30
 
@@ -32,7 +34,9 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[datetime.timedelta] = None) -> str:
+def create_access_token(
+    data: Dict[Any, Any], expires_delta: Optional[datetime.timedelta] = None
+) -> str:
     to_encode = data.copy()
     if expires_delta is not None:
         expire = datetime.datetime.utcnow() + expires_delta
@@ -43,9 +47,12 @@ def create_access_token(data: dict, expires_delta: Optional[datetime.timedelta] 
 
 
 @inject
-async def get_current_user(token: str = Depends(oauth2_scheme),
-                           user_repository: UserRepository = Depends(Provide[Application.services.user_repository])
-                           ) -> User:
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    user_repository: UserRepository = Depends(
+        Provide[Application.services.user_repository]
+    ),
+) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -61,7 +68,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme),
         raise credentials_exception
     try:
         user = User.from_orm(
-            await user_repository.select_one(user_repository.model.username == token_data.username)
+            await user_repository.select_one(
+                user_repository.model.username == token_data.username
+            )
         )
         if user is None:
             raise ValidationError
@@ -70,18 +79,20 @@ async def get_current_user(token: str = Depends(oauth2_scheme),
     return user
 
 
-async def authenticate_user(username: str, password: str, user_repository: UserRepository) -> _DB_User:
+async def authenticate_user(
+    username: str, password: str, user_repository: UserRepository
+) -> _DB_User:
     user = await user_repository.select_one(user_repository.model.username == username)
     if not user or not verify_password(password, user.hashed_password):  # type: ignore
-        raise UserIsNotAuthenticated()
+        raise UserIsNotAuthenticated(f"{password}/{user.hashed_password}")
     return user
 
 
 __all__ = (
-    'oauth2_scheme',
-    'get_current_user',
-    'authenticate_user',
-    'ACCESS_TOKEN_EXPIRE_MINUTES',
-    'create_access_token',
-    'get_password_hash'
+    "oauth2_scheme",
+    "get_current_user",
+    "authenticate_user",
+    "ACCESS_TOKEN_EXPIRE_MINUTES",
+    "create_access_token",
+    "get_password_hash",
 )

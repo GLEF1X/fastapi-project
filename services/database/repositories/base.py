@@ -24,7 +24,9 @@ class BaseRepo(ABC, typing.Generic[Model]):
     # You need to define this variable in child classes
     model: typing.ClassVar[typing.Type[Model]]
 
-    def __init__(self, session_or_pool: typing.Union[sessionmaker, AsyncSession]) -> None:
+    def __init__(
+        self, session_or_pool: typing.Union[sessionmaker, AsyncSession]
+    ) -> None:
         """
 
         :param session_or_pool: async session from async context manager
@@ -60,7 +62,12 @@ class BaseRepo(ABC, typing.Generic[Model]):
     async def insert(self, **values: typing.Any) -> typing.Dict[str, typing.Any]:
         """Add model into database"""
         async with self.transaction:
-            insert_stmt = insert(self.model).values(**values).on_conflict_do_nothing().returning(self.model)
+            insert_stmt = (
+                insert(self.model)
+                .values(**values)
+                .on_conflict_do_nothing()
+                .returning(self.model)
+            )
             result = (await self.session.execute(insert_stmt)).mappings().first()
         return typing.cast(typing.Dict[str, typing.Any], result)
 
@@ -75,7 +82,11 @@ class BaseRepo(ABC, typing.Generic[Model]):
         stmt = lambda_stmt(lambda: select(query_model))
         stmt += lambda s: s.where(*clauses)
         async with self.transaction:
-            result = (await self.session.execute(typing.cast(Executable, stmt))).scalars().all()
+            result = (
+                (await self.session.execute(typing.cast(Executable, stmt)))
+                .scalars()
+                .all()
+            )
 
         return result
 
@@ -89,7 +100,11 @@ class BaseRepo(ABC, typing.Generic[Model]):
         stmt = lambda_stmt(lambda: select(query_model))
         stmt += lambda s: s.where(*clauses)
         async with self.transaction:
-            result = (await self.session.execute(typing.cast(Executable, stmt))).scalars().first()
+            result = (
+                (await self.session.execute(typing.cast(Executable, stmt)))
+                .scalars()
+                .first()
+            )
 
         return typing.cast(Model, result)
 

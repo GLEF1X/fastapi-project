@@ -11,7 +11,6 @@ class User(Base):
     phone_number = sa.Column(sa.Text, unique=False)
     email = sa.Column(sa.VARCHAR(70), unique=True)
     password = sa.Column(sa.Text, unique=False)
-    balance = sa.Column(sa.DECIMAL, server_default='0')
-    username = sa.Column(sa.VARCHAR(70), nullable=False, unique=True,
-                         index=True)
+    balance = sa.Column(sa.DECIMAL, server_default="0")
+    username = sa.Column(sa.VARCHAR(70), nullable=False, unique=True, index=True)
     hashed_password = sa.Column(sa.Text, nullable=True, unique=True)

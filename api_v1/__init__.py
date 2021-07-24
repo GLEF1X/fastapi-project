@@ -15,4 +15,4 @@ def setup_routers() -> APIRouter:
     return api_router
 
 
-__all__ = ('setup_routers',)
+__all__ = ("setup_routers",)

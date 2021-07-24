@@ -9,5 +9,7 @@ class ProductRepository(BaseRepo[Product]):
     model = Product
 
     async def add(self, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
-        warnings.warn("Deprecated call. Use `insert` instead of it", category=DeprecationWarning)
+        warnings.warn(
+            "Deprecated call. Use `insert` instead of it", category=DeprecationWarning
+        )
         return await self.insert(**kwargs)

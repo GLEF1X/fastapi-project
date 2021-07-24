@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Union, NoReturn, Any, Dict, Type
+from typing import Optional, Any
 
 from email_validator import validate_email
 from pydantic import BaseModel, Field, validator
@@ -11,13 +11,16 @@ class User(BaseModel):
     first_name: str = Field(..., example="Gleb", title="Имя")
     last_name: str = Field(..., example="Garanin", title="Фамилия")
     phone_number: Optional[str] = Field(
-        default=None,
+        None,
         regex=r"^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$",
-        min_length=10, max_length=15, title="Номер мобильного телефона",
-        example="+7900232132"
+        min_length=10,
+        max_length=15,
+        title="Номер мобильного телефона",
+        example="+7900232132",
     )
-    email: Optional[str] = Field(default=None, title="Адрес электронной почты",
-                                 example="glebgar567@gmail.com")
+    email: Optional[str] = Field(
+        None, title="Адрес электронной почты", example="glebgar567@gmail.com"
+    )
     balance: float
     password: str = Field(..., example="qwerty12345")
     id: Optional[int] = None
@@ -67,8 +70,7 @@ class SimpleResponse(BaseModel):
 
 class TestResponse(BaseModel):
     success: bool = True
-    user_agent: Optional[str] = Field(..., alias="User-Agent")
-    value: int
+    user_agent: Optional[str] = Field(None, alias="User-Agent")
 
 
 class Token(BaseModel):

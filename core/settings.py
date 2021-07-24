@@ -1,22 +1,17 @@
 import pathlib
+import secrets
 from typing import Optional, Dict, Any, List, Union, TypeVar
 
-from pydantic import (
-    BaseSettings,
-    Field,
-    AnyHttpUrl,
-    PostgresDsn,
-    validator
-)
+from pydantic import BaseSettings, Field, AnyHttpUrl, PostgresDsn, validator, EmailStr
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
-ENV_PATH = str(BASE_DIR / '.env')
+ENV_PATH = str(BASE_DIR / ".env")
 TEMPLATES_DIR = str(BASE_DIR / "templates")
 T = TypeVar("T")
 
 
 class DatabaseSettings(BaseSettings):
-    DB_USER: str = Field(..., env='DB_USER')
+    DB_USER: str = Field(..., env="DB_USER")
     DB_PASS: str = Field(..., env="DB_PASS")
     DB_HOST: Union[str, AnyHttpUrl] = Field(..., env="DB_HOST")
     DB_NAME: str = Field(..., env="DB_NAME")
@@ -39,7 +34,7 @@ class DatabaseSettings(BaseSettings):
 
     class Config:
         env_file = ENV_PATH
-        env_file_encoding = 'utf-8'
+        env_file_encoding = "utf-8"
 
 
 class FastAPISettings(BaseSettings):
@@ -51,25 +46,29 @@ class FastAPISettings(BaseSettings):
     IS_PRODUCTION: str = Field(..., env="IS_PRODUCTION")
     TEMPLATES_DIR: str = str(BASE_DIR / "templates")
 
+    API_V1_STR: str = "/api/v1"
+    SECRET_KEY: str = secrets.token_urlsafe(32)
+    # 60 minutes * 24 hours * 8 days = 8 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
+
     api_kwargs: Optional[Dict[str, Any]] = None
 
     @validator("api_kwargs", pre=True)
-    def set_api_kwargs(cls,
-                       v: Optional[Dict[str, Any]],
-                       values: Dict[str, Any]
-                       ) -> Union[dict, Dict[str, Optional[bool]]]:
+    def set_api_kwargs(
+        cls, v: Optional[Dict[str, Any]], values: Dict[str, Any]
+    ) -> Union[dict, Dict[str, Optional[bool]]]:
         if isinstance(v, dict):
             return v
         return {
-            'debug': True,
-            'title': values.get("APP_NAME"),
-            'version': values.get("API_VERSION"),
-            'docs_url': values.get("DOCS_URL"),
-            'redoc_url': values.get("REDOC_URL"),
-            'openapi_url': values.get("OPEN_API_ROOT") if not values.get(
-                "IS_PRODUCTION"
-            ) else "/openapi.json",
-            'openapi_tags': values.get("tags_metadata")
+            "debug": True,
+            "title": values.get("APP_NAME"),
+            "version": values.get("API_VERSION"),
+            "docs_url": values.get("DOCS_URL"),
+            "redoc_url": values.get("REDOC_URL"),
+            "openapi_url": values.get("OPEN_API_ROOT")
+            if not values.get("IS_PRODUCTION")
+            else "/openapi.json",
+            "openapi_tags": values.get("tags_metadata"),
         }
 
     ALLOWED_HEADERS: List[str] = [
@@ -78,14 +77,29 @@ class FastAPISettings(BaseSettings):
         "accept",
         "Accept-Encoding",
         "Content-Length",
-        "Origin"
+        "Origin",
     ]
 
-    ALLOWED_ORIGINS: List[str] = ["http://localhost", "http://localhost:8000", ]
+    # BACKEND_CORS_ORIGINS is a JSON-formatted list of origins
+    # e.g: '["http://localhost", "http://localhost:4200", "http://localhost:3000", \
+    # "http://localhost:8080", "http://local.dockertoolbox.tiangolo.com"]'
+    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = [
+        "http://localhost",
+        "http://localhost:4200",
+        "http://localhost:3000",
+    ]
+
+    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
 
     class Config:
         env_file = ENV_PATH
-        env_file_encoding = 'utf-8'
+        env_file_encoding = "utf-8"
 
 
 class RedisSettings(BaseSettings):
@@ -94,7 +108,7 @@ class RedisSettings(BaseSettings):
 
     class Config:
         env_file = ENV_PATH
-        env_file_encoding = 'utf-8'
+        env_file_encoding = "utf-8"
 
 
 class APIServicesSettings(BaseSettings):
@@ -104,7 +118,14 @@ class APIServicesSettings(BaseSettings):
 
     class Config:
         env_file = ENV_PATH
-        env_file_encoding = 'utf-8'
+        env_file_encoding = "utf-8"
+
+
+class TestSettings(BaseSettings):
+    EMAIL_TEST_USER: EmailStr = "test@example.com"  # type: ignore
+    FIRST_SUPERUSER: EmailStr = "superuser@example.com"  # type: ignore
+    FIRST_SUPERUSER_PASSWORD: str = "secret_password_12345"
+    USERS_OPEN_REGISTRATION: bool = False
 
 
 class ApplicationSettings(BaseSettings):
@@ -112,10 +133,11 @@ class ApplicationSettings(BaseSettings):
     fastapi: FastAPISettings = FastAPISettings()  # noqa
     redis: RedisSettings = RedisSettings()
     api: APIServicesSettings = APIServicesSettings()
+    tests: TestSettings = TestSettings()
 
     class Config:
         env_file = ENV_PATH
-        env_file_encoding = 'utf-8'
+        env_file_encoding = "utf-8"
 
 
 __all__ = ("BASE_DIR", "ApplicationSettings", "TEMPLATES_DIR")

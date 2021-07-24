@@ -3,11 +3,20 @@ from typing import Optional, cast, Type, Dict, Any
 
 from loguru import logger
 from sqlalchemy import inspect, event
-from sqlalchemy.dialects.postgresql.asyncpg import AsyncAdapt_asyncpg_cursor, PGExecutionContext_asyncpg
+from sqlalchemy.dialects.postgresql.asyncpg import (
+    AsyncAdapt_asyncpg_cursor,
+    PGExecutionContext_asyncpg,
+)
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncConnection
 from sqlalchemy.future import Connection
-from sqlalchemy.orm import registry, DeclarativeMeta, declared_attr, has_inherited_table, sessionmaker
+from sqlalchemy.orm import (
+    registry,
+    DeclarativeMeta,
+    declared_attr,
+    has_inherited_table,
+    sessionmaker,
+)
 from sqlalchemy.util import ImmutableProperties
 
 mapper_registry = registry()
@@ -41,7 +50,8 @@ class Base(metaclass=DeclarativeMeta):
     def __repr__(self) -> str:
         table_attrs = cast(ImmutableProperties, inspect(self).attrs)
         primary_keys = " ".join(
-            f"{key.name}={table_attrs[key.name].value}" for key in inspect(self.__class__).primary_key
+            f"{key.name}={table_attrs[key.name].value}"
+            for key in inspect(self.__class__).primary_key
         )
         return f"{self.__class__.__qualname__}->{primary_keys}"
 
@@ -51,24 +61,24 @@ class Base(metaclass=DeclarativeMeta):
 
 # noinspection PyUnusedLocal
 def before_execute_handler(
-        conn: Connection,
-        cursor: AsyncAdapt_asyncpg_cursor,
-        statement: str,
-        parameters: tuple,
-        context: PGExecutionContext_asyncpg,
-        executemany: bool,
+    conn: Connection,
+    cursor: AsyncAdapt_asyncpg_cursor,
+    statement: str,
+    parameters: tuple,
+    context: PGExecutionContext_asyncpg,
+    executemany: bool,
 ):
     conn.info.setdefault("query_start_time", []).append(time.monotonic())
 
 
 # noinspection PyUnusedLocal
 def after_execute(
-        conn: Connection,
-        cursor: AsyncAdapt_asyncpg_cursor,
-        statement: str,
-        parameters: tuple,
-        context: PGExecutionContext_asyncpg,
-        executemany: bool,
+    conn: Connection,
+    cursor: AsyncAdapt_asyncpg_cursor,
+    statement: str,
+    parameters: tuple,
+    context: PGExecutionContext_asyncpg,
+    executemany: bool,
 ):
     total = time.monotonic() - conn.info["query_start_time"].pop(-1)
     # sqlalchemy bug, executed twice `#4181` issue number
@@ -78,19 +88,21 @@ def after_execute(
 
 class DatabaseComponents:
     def __init__(
-            self,
-            engine_kwargs: Optional[Dict[Any, Any]] = None,
-            **kwargs
+        self, engine_kwargs: Optional[Dict[Any, Any]] = None, **kwargs
     ) -> None:
         self.__engine_kwargs = engine_kwargs or {}
-        self.engine = create_async_engine(url=URL.create(**kwargs), **self.__engine_kwargs)
+        self.engine = create_async_engine(
+            url=URL.create(**kwargs), **self.__engine_kwargs
+        )
         self.sessionmaker = sessionmaker(  # NOQA
             self.engine, class_=AsyncSession, expire_on_commit=False, autoflush=False
         )
         self.setup_db_events()
 
     def setup_db_events(self) -> None:
-        event.listen(self.engine.sync_engine, "before_cursor_execute", before_execute_handler)
+        event.listen(
+            self.engine.sync_engine, "before_cursor_execute", before_execute_handler
+        )
         event.listen(self.engine.sync_engine, "after_cursor_execute", after_execute)
 
     async def recreate(self) -> None:
