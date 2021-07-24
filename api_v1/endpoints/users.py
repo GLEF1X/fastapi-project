@@ -5,8 +5,8 @@ from fastapi import Header, Path, HTTPException, Depends, APIRouter
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from services.database.repositories.user import UserRepository
 from services.database.exceptions import UnableToDelete
+from services.database.repositories.user import UserRepository
 from services.dependencies.containers import Application
 from services.misc import User, DefaultResponse
 from services.misc.schemas import ObjectCount, SimpleResponse
@@ -17,15 +17,16 @@ from services.utils.security import get_current_user
 api_router = APIRouter()
 
 
+# noinspection PyUnusedLocal
 @api_router.get("/users/{user_id}/info", response_model=User, tags=["Users"])
 @inject
 async def get_user_info(
-    user_id: int,
-    # user: User = Depends(get_current_user),
-    user_agent: Optional[str] = Header(None, title="User-Agent"),
-    user_repository: UserRepository = Depends(
-        Provide[Application.services.user_repository]
-    ),
+        user_id: int,
+        # user: User = Depends(get_current_user),
+        user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        ),
 ):
     if not user_agent:
         return bad_response()
@@ -36,6 +37,7 @@ async def get_user_info(
         return not_found(user_id)
 
 
+# noinspection PyUnusedLocal
 @api_router.get(
     "/users/all",
     response_model=List[User],
@@ -44,11 +46,11 @@ async def get_user_info(
 )
 @inject
 async def get_all_users(
-    user: User = Depends(get_current_user),
-    user_agent: Optional[str] = Header(None, title="User-Agent"),
-    user_repository: UserRepository = Depends(
-        Provide[Application.services.user_repository]
-    ),
+        user: User = Depends(get_current_user),
+        user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        ),
 ):
     if not user_agent:
         return bad_response()
@@ -61,11 +63,11 @@ async def get_all_users(
 )
 @inject
 async def create_user(
-    user: User = UserBodySpec.item,
-    user_agent: str = Header(..., title="User-Agent"),
-    user_repository: UserRepository = Depends(
-        Provide[Application.services.user_repository]
-    ),
+        user: User = UserBodySpec.item,
+        user_agent: str = Header(..., title="User-Agent"),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        ),
 ):
     """*Create a new user in database"""
     payload = user.dict(exclude_unset=True)
@@ -77,6 +79,7 @@ async def create_user(
     return {"success": True, "User-Agent": user_agent}
 
 
+# noinspection PyUnusedLocal
 @api_router.post(
     "/users/count",
     response_description="Return an integer or null",
@@ -86,17 +89,18 @@ async def create_user(
 )
 @inject
 async def get_users_count(
-    user_agent: Optional[str] = Header(None, title="User-Agent"),
-    user: User = Depends(get_current_user),
-    user_repository: UserRepository = Depends(
-        Provide[Application.services.user_repository]
-    ),
+        user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user: User = Depends(get_current_user),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        ),
 ):
     if not user_agent:
         return bad_response()
     return {"count": await user_repository.count()}
 
 
+# noinspection PyUnusedLocal
 @api_router.delete(
     "/users/{user_id}/delete",
     response_description="return nothing",
@@ -106,12 +110,12 @@ async def get_users_count(
 )
 @inject
 async def delete_user(
-    user_id: int = Path(...),
-    user: User = Depends(get_current_user),
-    user_agent: Optional[str] = Header(None, title="User-Agent"),
-    user_repository: UserRepository = Depends(
-        Provide[Application.services.user_repository]
-    ),
+        user_id: int = Path(...),
+        user: User = Depends(get_current_user),
+        user_agent: Optional[str] = Header(None, title="User-Agent"),
+        user_repository: UserRepository = Depends(
+            Provide[Application.services.user_repository]
+        ),
 ):
     if not user_agent:
         return bad_response()

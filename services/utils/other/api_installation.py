@@ -32,8 +32,8 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
 
     def __init__(self) -> None:
         super(ApplicationConfiguratorBuilder, self).__init__()
-        self.app = FastAPI(**self._settings.fastapi.api_kwargs)
-        self.app.settings = self._settings
+        self.app = FastAPI(**self._settings.fastapi.api_kwargs)   # type: ignore
+        self.app.settings = self._settings   # type: ignore
 
         self._openapi_schema: Optional[Dict[str, Any]] = None
         self._container = Application()
@@ -100,7 +100,7 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
             packages=[endpoints],
             modules=[testpoint, security, not_for_production, sys.modules[__name__]],
         )
-        self.app.container = self._container
+        self.app.container = self._container  # type: ignore
 
     def configure_events(self) -> None:
         self.app.add_event_handler("startup", on_startup)

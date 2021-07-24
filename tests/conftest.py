@@ -36,7 +36,7 @@ def app() -> Generator[FastAPI, Any, Any]:
 
 @pytest.fixture(scope="module")
 def settings(app: FastAPI) -> Generator[ApplicationSettings, Any, Any]:
-    yield cast(ApplicationSettings, app.settings)  # noqa
+    yield cast(ApplicationSettings, app.settings)  # type: ignore
 
 
 @pytest.fixture(scope="module")

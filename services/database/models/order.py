@@ -13,4 +13,4 @@ class Order(Base):
         sa.ForeignKey("products.id", ondelete="CASCADE", onupdate="CASCADE"),
     )
     quantity = sa.Column(sa.SmallInteger, server_default="1")
-    created_at = sa.Column(sa.DateTime, server_default=sa.func.now())
+    created_at = sa.Column(sa.DateTime(), server_default=sa.func.now())  # type: ignore

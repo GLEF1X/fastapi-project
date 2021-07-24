@@ -55,7 +55,7 @@ class FastAPISettings(BaseSettings):
 
     @validator("api_kwargs", pre=True)
     def set_api_kwargs(
-        cls, v: Optional[Dict[str, Any]], values: Dict[str, Any]
+            cls, v: Optional[Dict[str, Any]], values: Dict[str, Any]
     ) -> Union[dict, Dict[str, Optional[bool]]]:
         if isinstance(v, dict):
             return v
@@ -83,11 +83,8 @@ class FastAPISettings(BaseSettings):
     # BACKEND_CORS_ORIGINS is a JSON-formatted list of origins
     # e.g: '["http://localhost", "http://localhost:4200", "http://localhost:3000", \
     # "http://localhost:8080", "http://local.dockertoolbox.tiangolo.com"]'
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = [
-        "http://localhost",
-        "http://localhost:4200",
-        "http://localhost:3000",
-    ]
+    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = ["http://localhost", "http://localhost:4200",  # type: ignore
+                                              "http://localhost:3000", ]  # type: ignore
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
