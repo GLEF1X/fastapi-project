@@ -91,7 +91,9 @@ class DatabaseComponents:
         self, engine_kwargs: Optional[Dict[Any, Any]] = None, **kwargs
     ) -> None:
         self.__engine_kwargs = engine_kwargs or {}
-        self.engine = create_async_engine(url=URL.create(**kwargs), **self.__engine_kwargs)
+        self.engine = create_async_engine(
+            url=URL.create(**kwargs), **self.__engine_kwargs
+        )
         self.sessionmaker = sessionmaker(  # NOQA
             self.engine, class_=AsyncSession, expire_on_commit=False, autoflush=False
         )

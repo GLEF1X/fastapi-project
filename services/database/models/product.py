@@ -21,4 +21,4 @@ class Product(Base):
     unit_price = sa.Column(sa.Numeric(precision=8), server_default="1")
     size = sa.Column(sa.Enum(SizeEnum))
     description = sa.Column(sa.Text, default=None, nullable=True)
-    created_at = sa.Column(sa.DateTime(), server_default=sa.func.now()) # type: ignore
+    created_at = sa.Column(sa.DateTime(), server_default=sa.func.now())  # type: ignore

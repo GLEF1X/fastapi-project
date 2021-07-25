@@ -13,4 +13,3 @@ class User(Base):
     password = sa.Column(sa.Text, unique=False)
     balance = sa.Column(sa.DECIMAL, server_default="0")
     username = sa.Column(sa.VARCHAR(70), nullable=False, unique=True, index=True)
-    hashed_password = sa.Column(sa.Text, nullable=True, unique=True)

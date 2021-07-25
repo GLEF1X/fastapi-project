@@ -1,5 +1,6 @@
 import asyncio
 from typing import Generator, Any, AsyncGenerator, cast, Dict
+from unittest import mock
 from unittest.mock import Mock
 
 import pytest
@@ -21,7 +22,7 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture(scope="module")
 def event_loop(
-    request: FixtureRequest,
+        request: FixtureRequest,
 ) -> Generator[asyncio.AbstractEventLoop, Any, Any]:
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
@@ -55,14 +56,13 @@ def auth_user(settings: ApplicationSettings) -> User:
         last_name="Гаранин",
         email=settings.tests.FIRST_SUPERUSER,
         balance=1,
-        password=settings.tests.FIRST_SUPERUSER_PASSWORD,
-        hashed_password=get_password_hash(settings.tests.FIRST_SUPERUSER_PASSWORD),
+        password=get_password_hash(settings.tests.FIRST_SUPERUSER_PASSWORD),
     )
 
 
 @pytest.fixture(scope="module", name="token")
 async def access_token_fixture(
-    client: AsyncClient, app: FastAPI, settings: ApplicationSettings, auth_user
+        client: AsyncClient, app: FastAPI, settings: ApplicationSettings, auth_user
 ) -> str:
     login_data = {
         "username": settings.tests.FIRST_SUPERUSER,
@@ -83,3 +83,10 @@ async def access_token_fixture(
 @pytest.fixture(name="auth_headers", scope="module")
 def auth_headers(token: str) -> Dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(name="authorized_mock", scope="module")
+def authorized_mock(auth_user: User) -> Mock:
+    repo_mock = mock.Mock(spec=UserRepository)
+    repo_mock.select_one.return_value = auth_user
+    return repo_mock

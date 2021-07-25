@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import pathlib
 import secrets
+from functools import lru_cache
 from typing import Optional, Dict, Any, List, Union, TypeVar
 
 from pydantic import BaseSettings, Field, AnyHttpUrl, PostgresDsn, validator, EmailStr
@@ -8,6 +11,11 @@ BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 ENV_PATH = str(BASE_DIR / ".env")
 TEMPLATES_DIR = str(BASE_DIR / "templates")
 T = TypeVar("T")
+
+
+@lru_cache()
+def get_settings() -> ApplicationSettings:
+    return ApplicationSettings()
 
 
 class DatabaseSettings(BaseSettings):
@@ -83,8 +91,11 @@ class FastAPISettings(BaseSettings):
     # BACKEND_CORS_ORIGINS is a JSON-formatted list of origins
     # e.g: '["http://localhost", "http://localhost:4200", "http://localhost:3000", \
     # "http://localhost:8080", "http://local.dockertoolbox.tiangolo.com"]'
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = ["http://localhost", "http://localhost:4200",  # type: ignore
-                                              "http://localhost:3000", ]  # type: ignore
+    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = [
+        "http://localhost",  # type: ignore
+        "http://localhost:4200",  # type: ignore
+        "http://localhost:3000",  # type: ignore
+    ]  # type: ignore
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
@@ -137,4 +148,4 @@ class ApplicationSettings(BaseSettings):
         env_file_encoding = "utf-8"
 
 
-__all__ = ("BASE_DIR", "ApplicationSettings", "TEMPLATES_DIR")
+__all__ = ("BASE_DIR", "ApplicationSettings", "TEMPLATES_DIR", "get_settings")

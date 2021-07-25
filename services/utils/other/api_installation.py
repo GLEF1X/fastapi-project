@@ -9,7 +9,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from api_v1 import setup_routers, endpoints, not_for_production
-from api_v1.endpoints import testpoint
+from api_v1.endpoints import basic
 from middlewares.process_time_middleware import add_process_time_header
 from services.database.models.base import DatabaseComponents
 from services.dependencies.containers import Application
@@ -23,7 +23,7 @@ ALLOWED_METHODS = ["POST", "PUT", "DELETE", "GET"]
 
 @inject
 async def on_startup(db: DatabaseComponents = Provide[Application.services.db]) -> None:
-    # await database.recreate()
+    # await db.recreate()
     ...
 
 
@@ -32,8 +32,8 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
 
     def __init__(self) -> None:
         super(ApplicationConfiguratorBuilder, self).__init__()
-        self.app = FastAPI(**self._settings.fastapi.api_kwargs)   # type: ignore
-        self.app.settings = self._settings   # type: ignore
+        self.app = FastAPI(**self._settings.fastapi.api_kwargs)  # type: ignore
+        self.app.settings = self._settings  # type: ignore
 
         self._openapi_schema: Optional[Dict[str, Any]] = None
         self._container = Application()
@@ -98,7 +98,7 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
         )
         self._container.wire(
             packages=[endpoints],
-            modules=[testpoint, security, not_for_production, sys.modules[__name__]],
+            modules=[basic, security, not_for_production, sys.modules[__name__]],
         )
         self.app.container = self._container  # type: ignore
 

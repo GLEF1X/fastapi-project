@@ -1,30 +1,31 @@
 import asyncio
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import AsyncEngine
+from typing import no_type_check
 
 from alembic import context
+from sqlalchemy import engine_from_config, pool
+from sqlalchemy.engine import URL
+from sqlalchemy.ext.asyncio import AsyncEngine
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+from core.settings import get_settings
+from services.database.models.base import Base
+
+target_metadata = Base.metadata
 config = context.config
-
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
 fileConfig(config.config_file_name)
-
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+application_settings = get_settings()
+config.set_main_option(
+    "sqlalchemy.url",
+    str(
+        URL.create(
+            drivername="postgresql+asyncpg",
+            username=application_settings.database.DB_USER,
+            password=application_settings.database.DB_PASS,
+            database=application_settings.database.DB_NAME,
+            host=application_settings.database.DB_HOST,
+        )
+    ),
+)
 
 
 def run_migrations_offline():
@@ -45,14 +46,23 @@ def run_migrations_offline():
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        compare_server_default=True,
+        compare_type=True,
     )
 
     with context.begin_transaction():
         context.run_migrations()
 
 
+@no_type_check
 def do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_server_default=True,
+        compare_type=True,
+        include_schemas=True,
+    )
 
     with context.begin_transaction():
         context.run_migrations()
@@ -68,7 +78,7 @@ async def run_migrations_online():
     connectable = AsyncEngine(
         engine_from_config(
             config.get_section(config.config_ini_section),
-            prefix="sqlalchemy.",
+            prefix="sqlalchemy.",  # noqa
             poolclass=pool.NullPool,
             future=True,
         )

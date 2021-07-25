@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Final, Dict, Any
+from typing import Optional, Final, Dict, Any, cast
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import HTTPException, Depends
@@ -9,13 +9,13 @@ from passlib.context import CryptContext
 from pydantic import ValidationError
 from starlette import status
 
+from services.database.models import User as _DB_User
 from services.database.repositories.user import UserRepository
 from services.dependencies.containers import Application
 from services.misc import TokenData, User
-from services.database.models import User as _DB_User
 from services.utils.exceptions import UserIsNotAuthenticated
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api_v1/v1/oauth")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/oauth")
 
 SECRET_KEY: Final[
     str
@@ -83,8 +83,8 @@ async def authenticate_user(
     username: str, password: str, user_repository: UserRepository
 ) -> _DB_User:
     user = await user_repository.select_one(user_repository.model.username == username)
-    if not user or not verify_password(password, user.hashed_password):  # type: ignore
-        raise UserIsNotAuthenticated(f"{password}/{user.hashed_password}")
+    if not user or not verify_password(password, cast(str, user.password)):
+        raise UserIsNotAuthenticated()
     return user
 
 

@@ -8,10 +8,10 @@ from services.dependencies.services import RedisService
 from services.misc.schemas import TestResponse, User
 from services.utils.security import get_current_user
 
-api_router = APIRouter(prefix="/api/v1")
+fundamental_api_router = APIRouter(prefix="/api/v1")
 
 
-@api_router.get("/test", tags=["Test"], response_model=TestResponse)
+@fundamental_api_router.get("/test", tags=["Test"], response_model=TestResponse)
 @inject
 async def test(
     user: User = Depends(get_current_user),

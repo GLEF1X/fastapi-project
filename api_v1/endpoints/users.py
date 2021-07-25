@@ -22,7 +22,7 @@ api_router = APIRouter()
 @inject
 async def get_user_info(
         user_id: int,
-        # user: User = Depends(get_current_user),
+        user: User = Depends(get_current_user),
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(
             Provide[Application.services.user_repository]
@@ -120,9 +120,9 @@ async def delete_user(
     if not user_agent:
         return bad_response()
     try:
-        await user_repository.delete_by_user_id(user_id)
+        await user_repository.delete(user_repository.model.id == user_id)
     except UnableToDelete:
         raise HTTPException(
             status_code=400, detail=f"There isn't entry with id={user_id}"
         )
-    return {"response": "user deleted"}
+    return {"message": f"User with id {user_id} was successfully deleted from database"}
