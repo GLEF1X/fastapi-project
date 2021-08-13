@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 
-from . import not_for_production
-from .endpoints import users, basic, oauth, products
+from .v1 import not_for_production
+from api.v1.endpoints import users, basic, products
+from .v1.endpoints import oauth
 
 
 def setup_routers() -> APIRouter:

@@ -1,11 +1,16 @@
+#  Copyright (c) 2021. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+#  Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan.
+#  Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
+#  Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
+#  Vestibulum commodo. Ut rhoncus gravida arcu.
+
 from typing import Optional
 
-from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Query, Path
 from starlette import status
 
+from api.v1.dependencies.database import get_repository
 from services.database.repositories.product import ProductRepository
-from services.dependencies.containers import Application
 from services.misc import Product
 from services.utils.responses import get_pydantic_model_or_raise_exception
 
@@ -18,12 +23,9 @@ api_router = APIRouter()
         200: {"model": Product},
     },
 )
-@inject
 async def get_product_by_id(
-    product_id: int = Path(...),
-    product_repository: ProductRepository = Depends(
-        Provide[Application.services.product_repository]
-    ),
+        product_id: int = Path(...),
+        product_repository: ProductRepository = Depends(get_repository(ProductRepository)),
 ) -> Product:
     product = await product_repository.select_one(
         product_repository.model.id == product_id
@@ -33,10 +35,10 @@ async def get_product_by_id(
 
 @api_router.get("/test_api/{user_id}/items/{item_id}", status_code=status.HTTP_200_OK)
 async def read_user_item(
-    user_id: int,
-    item_id: str,
-    short: bool = False,
-    q: Optional[str] = Query(None, max_length=50, deprecated=True),
+        user_id: int,
+        item_id: str,
+        short: bool = False,
+        q: Optional[str] = Query(None, max_length=50, deprecated=True),
 ):
     item = {"item_id": item_id, "owner_id": user_id}
     if q:

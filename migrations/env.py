@@ -19,10 +19,10 @@ config.set_main_option(
     str(
         URL.create(
             drivername="postgresql+asyncpg",
-            username=application_settings.database.DB_USER,
-            password=application_settings.database.DB_PASS,
-            database=application_settings.database.DB_NAME,
-            host=application_settings.database.DB_HOST,
+            username=application_settings.database.USER,
+            password=application_settings.database.PASS,
+            database=application_settings.database.NAME,
+            host=application_settings.database.HOST,
         )
     ),
 )

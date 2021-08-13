@@ -4,14 +4,14 @@ from sqlalchemy import insert, delete
 
 from services.database.exceptions import UnableToDelete
 from services.database.models import User
-from services.database.repositories.base import BaseRepo, Model
+from services.database.repositories.base import BaseRepository, Model
 
 
-class UserRepository(BaseRepo[User]):
+class UserRepository(BaseRepository[User]):
     model = User
 
     async def add(self, **kwargs: typing.Any) -> Model:
-        from services.utils.security import get_password_hash
+        from api.v1.dependencies.security import get_password_hash
 
         async with self.transaction:
             hashed_password = get_password_hash(kwargs.pop("password"))

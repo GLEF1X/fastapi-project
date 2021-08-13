@@ -19,10 +19,10 @@ def get_settings() -> ApplicationSettings:
 
 
 class DatabaseSettings(BaseSettings):
-    DB_USER: str = Field(..., env="DB_USER")
-    DB_PASS: str = Field(..., env="DB_PASS")
-    DB_HOST: Union[str, AnyHttpUrl] = Field(..., env="DB_HOST")
-    DB_NAME: str = Field(..., env="DB_NAME")
+    USER: str = Field(..., env="DB_USER")
+    PASS: str = Field(..., env="DB_PASS")
+    HOST: Union[str, AnyHttpUrl] = Field(..., env="DB_HOST")
+    NAME: str = Field(..., env="DB_NAME")
     # Here is type str instead of PostgresDsn, because PostgresDsn does not support asyncpg+postgresql connection
     CONNECTION_URL: Optional[str] = None
 
@@ -32,10 +32,10 @@ class DatabaseSettings(BaseSettings):
             return v
         sync_connection_url = PostgresDsn.build(
             scheme="postgresql",
-            user=values.get("DB_USER"),
-            password=values.get("DB_PASS"),
-            host=values.get("DB_HOST"),
-            path=f"/{values.get('DB_NAME') or ''}",
+            user=values.get("USER"),
+            password=values.get("PASS"),
+            host=values.get("HOST"),
+            path=f"/{values.get('NAME') or ''}",
         )
         # Get asyncpg+postgresql link to connect
         return sync_connection_url.replace("postgresql", "postgresql+asyncpg")

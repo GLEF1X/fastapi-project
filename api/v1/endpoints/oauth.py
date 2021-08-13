@@ -1,27 +1,21 @@
 from datetime import timedelta
 
-from dependency_injector.wiring import Provide, inject
 from fastapi import Depends, HTTPException, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 
+from api.v1.dependencies.database import get_repository
 from services.database.repositories.user import UserRepository
-from services.dependencies.containers import Application
 from services.utils.exceptions import UserIsNotAuthenticated
-from services.utils.security import (
-    authenticate_user,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    create_access_token,
-)
+from api.v1.dependencies.security import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, authenticate_user
 
 api_router = APIRouter()
 
 
 @api_router.post("/oauth", tags=["Test"])
-@inject
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    user_crud: UserRepository = Depends(Provide[Application.services.user_repository]),
+    user_crud: UserRepository = Depends(get_repository(UserRepository)),
 ):
     try:
         user = await authenticate_user(

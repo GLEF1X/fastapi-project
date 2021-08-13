@@ -1,32 +1,28 @@
 from typing import Optional, List
 
-from dependency_injector.wiring import Provide, inject
 from fastapi import Header, Path, HTTPException, Depends, APIRouter
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
+from api.v1.dependencies.database import get_repository
 from services.database.exceptions import UnableToDelete
 from services.database.repositories.user import UserRepository
-from services.dependencies.containers import Application
 from services.misc import User, DefaultResponse
 from services.misc.schemas import ObjectCount, SimpleResponse
 from services.utils.endpoints_specs import UserBodySpec
 from services.utils.responses import bad_response, not_found
-from services.utils.security import get_current_user
+from api.v1.dependencies.security import get_current_user
 
 api_router = APIRouter()
 
 
 # noinspection PyUnusedLocal
 @api_router.get("/users/{user_id}/info", response_model=User, tags=["Users"])
-@inject
 async def get_user_info(
         user_id: int,
         user: User = Depends(get_current_user),
         user_agent: Optional[str] = Header(None, title="User-Agent"),
-        user_repository: UserRepository = Depends(
-            Provide[Application.services.user_repository]
-        ),
+        user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
     if not user_agent:
         return bad_response()
@@ -44,13 +40,10 @@ async def get_user_info(
     responses={400: {"model": DefaultResponse}},
     tags=["Users"],
 )
-@inject
 async def get_all_users(
         user: User = Depends(get_current_user),
         user_agent: Optional[str] = Header(None, title="User-Agent"),
-        user_repository: UserRepository = Depends(
-            Provide[Application.services.user_repository]
-        ),
+        user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
     if not user_agent:
         return bad_response()
@@ -61,13 +54,10 @@ async def get_all_users(
 @api_router.put(
     "/users/create", responses={400: {"model": DefaultResponse}}, tags=["Users"]
 )
-@inject
 async def create_user(
         user: User = UserBodySpec.item,
         user_agent: str = Header(..., title="User-Agent"),
-        user_repository: UserRepository = Depends(
-            Provide[Application.services.user_repository]
-        ),
+        user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
     """*Create a new user in database"""
     payload = user.dict(exclude_unset=True)
@@ -87,13 +77,10 @@ async def create_user(
     tags=["Users"],
     summary="Return count of users in database",
 )
-@inject
 async def get_users_count(
         user_agent: Optional[str] = Header(None, title="User-Agent"),
         user: User = Depends(get_current_user),
-        user_repository: UserRepository = Depends(
-            Provide[Application.services.user_repository]
-        ),
+        user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
     if not user_agent:
         return bad_response()
@@ -108,14 +95,11 @@ async def get_users_count(
     summary="Delete user from database",
     response_model=SimpleResponse,
 )
-@inject
 async def delete_user(
         user_id: int = Path(...),
         user: User = Depends(get_current_user),
         user_agent: Optional[str] = Header(None, title="User-Agent"),
-        user_repository: UserRepository = Depends(
-            Provide[Application.services.user_repository]
-        ),
+        user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
     if not user_agent:
         return bad_response()

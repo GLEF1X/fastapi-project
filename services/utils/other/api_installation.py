@@ -8,8 +8,9 @@ from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
-from api_v1 import setup_routers, endpoints, not_for_production
-from api_v1.endpoints import basic
+from api import setup_routers
+from api.v1 import endpoints, not_for_production
+from api.v1.endpoints import basic
 from middlewares.process_time_middleware import add_process_time_header
 from services.database.models.base import DatabaseComponents
 from services.dependencies.containers import Application
@@ -78,37 +79,21 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
         self.app.include_router(api_router)
         self.app.include_router(setup_routers())
 
-    def configure_dependency_injector(self) -> None:
-        self._container.config.from_dict(
-            {
-                "services": {
-                    "REDIS_PASSWORD": self._settings.redis.REDIS_PASSWORD,
-                    "REDIS_HOST": self._settings.redis.REDIS_HOST,
-                    "DB_USER": self._settings.database.DB_USER,
-                    "DB_PASS": self._settings.database.DB_PASS,
-                    "DB_HOST": self._settings.database.DB_HOST,
-                    "DB_NAME": self._settings.database.DB_NAME,
-                },
-                "apis": {
-                    "QIWI_TOKEN": self._settings.api.QIWI_API_TOKEN,
-                    "QIWI_SECRET": self._settings.api.QIWI_SECRET,
-                    "PHONE_NUMBER": self._settings.api.PHONE_NUMBER,
-                },
-            }
-        )
-        self._container.wire(
-            packages=[endpoints],
-            modules=[basic, security, not_for_production, sys.modules[__name__]],
-        )
-        self.app.container = self._container  # type: ignore
-
     def configure_events(self) -> None:
         self.app.add_event_handler("startup", on_startup)
 
+    def configure_application_state(self):
+        components = DatabaseComponents(drivername="postgresql+asyncpg",
+                                        username=self._settings.database.USER,
+                                        password=self._settings.database.PASS,
+                                        host=self._settings.database.HOST,
+                                        database=self._settings.database.NAME)
+        self.app.state.pool = components.sessionmaker
+
     def configure(self) -> None:
-        self.configure_dependency_injector()
         self.configure_routes()
         self.setup_middlewares()
+        self.configure_application_state()
         self.configure_events()
         self.configure_templates()
 
@@ -138,7 +123,7 @@ class Director:
 
         :return: None, just run application with uvicorn
         """
-        uvicorn.run(self._builder.app, **kwargs)  # type: ignore
+        uvicorn.run(self._builder.app, **kwargs)  # type: ignore  # noqa
 
 
 __all__ = ("Director", "ApplicationConfiguratorBuilder")

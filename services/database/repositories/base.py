@@ -17,7 +17,7 @@ Model = typing.TypeVar("Model")
 TransactionContext = typing.AsyncContextManager[AsyncSessionTransaction]
 
 
-class BaseRepo(ABC, typing.Generic[Model]):
+class BaseRepository(ABC, typing.Generic[Model]):
     """
     Base class of hierarchy of repositories
 
@@ -58,7 +58,7 @@ class BaseRepo(ABC, typing.Generic[Model]):
 
     @property
     def transaction(self) -> TransactionContext:
-        """Mypy friendly :function:`BaseRepo.transaction` representation"""
+        """Mypy friendly :function:`BaseRepository.transaction` representation"""
         return self._transaction()
 
     async def insert(self, **values: typing.Any) -> typing.Dict[str, typing.Any]:

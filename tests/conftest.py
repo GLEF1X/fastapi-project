@@ -15,7 +15,7 @@ from services.utils.other.api_installation import (
     ApplicationConfiguratorBuilder,
     Director,
 )
-from services.utils.security import get_password_hash
+from api.v1.dependencies.security import get_password_hash
 
 pytestmark = pytest.mark.asyncio
 

@@ -2,10 +2,10 @@ import typing
 import warnings
 
 from services.database import Product
-from services.database.repositories.base import BaseRepo
+from services.database.repositories.base import BaseRepository
 
 
-class ProductRepository(BaseRepo[Product]):
+class ProductRepository(BaseRepository[Product]):
     model = Product
 
     async def add(self, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
