@@ -1,31 +1,20 @@
-import sys
 from typing import Any, Optional, Dict, no_type_check
 
 import uvicorn
-from dependency_injector.wiring import inject, Provide
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from api import setup_routers
-from api.v1 import endpoints, not_for_production
-from api.v1.endpoints import basic
+from core.events import create_on_startup_handler, create_on_shutdown_handler
 from middlewares.process_time_middleware import add_process_time_header
 from services.database.models.base import DatabaseComponents
-from services.dependencies.containers import Application
-from services.utils import security
 from services.utils.other.builder_base import BaseApplicationConfiguratorBuilder
 from views import home
 from views.home import api_router
 
 ALLOWED_METHODS = ["POST", "PUT", "DELETE", "GET"]
-
-
-@inject
-async def on_startup(db: DatabaseComponents = Provide[Application.services.db]) -> None:
-    # await db.recreate()
-    ...
 
 
 class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
@@ -37,14 +26,8 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
         self.app.settings = self._settings  # type: ignore
 
         self._openapi_schema: Optional[Dict[str, Any]] = None
-        self._container = Application()
 
-    def configure_openapi(self) -> None:
-        """
-        Method, which configure openapi schema
-
-        :return: configured instance of FastAPI
-        """
+    def configure_openapi_schema(self) -> None:
         self._openapi_schema = get_openapi(
             title="GLEF1X API",
             version="0.0.1",
@@ -58,11 +41,6 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
 
     @no_type_check
     def setup_middlewares(self):
-        """
-        Method, which setup middlewares
-
-        :return:
-        """
         self.app.add_middleware(BaseHTTPMiddleware, dispatch=add_process_time_header)
         self.app.add_middleware(
             middleware_class=CORSMiddleware,
@@ -80,22 +58,26 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
         self.app.include_router(setup_routers())
 
     def configure_events(self) -> None:
-        self.app.add_event_handler("startup", on_startup)
+        self.app.add_event_handler("startup", create_on_startup_handler(self.app))
+        self.app.add_event_handler("shutdown", create_on_shutdown_handler(self.app))
 
-    def configure_application_state(self):
+    def configure_application_state(self) -> None:
         components = DatabaseComponents(drivername="postgresql+asyncpg",
                                         username=self._settings.database.USER,
                                         password=self._settings.database.PASS,
                                         host=self._settings.database.HOST,
                                         database=self._settings.database.NAME)
-        self.app.state.pool = components.sessionmaker
+        self.app.state.db_components = components
 
     def configure(self) -> None:
         self.configure_routes()
         self.setup_middlewares()
         self.configure_application_state()
-        self.configure_events()
         self.configure_templates()
+        self.configure_openapi_schema()
+        # We run `configure_events(...)` in the end of configure method, because we need to pass to on_shutdown and
+        # on_startup handlers configured application
+        self.configure_events()
 
 
 class Director:

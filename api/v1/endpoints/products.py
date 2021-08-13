@@ -1,12 +1,10 @@
 from typing import Optional
 
-from dependency_injector.wiring import inject, Provide
 from fastapi import Header, Depends, APIRouter
 from fastapi.responses import Response
 
 from api.v1.dependencies.database import get_repository
 from services.database.repositories.product import ProductRepository
-from services.dependencies.containers import Application
 from services.misc import DefaultResponse
 from services.misc.schemas import Product, User
 from services.utils.endpoints_specs import ProductBodySpec
@@ -15,6 +13,7 @@ from services.utils.responses import bad_response
 api_router = APIRouter()
 
 
+# noinspection PyUnusedLocal
 @api_router.put(
     "/products/create",
     tags=["Product"],
