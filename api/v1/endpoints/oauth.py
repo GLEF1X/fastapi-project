@@ -15,12 +15,10 @@ api_router = APIRouter()
 @api_router.post("/oauth", tags=["Test"])
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    user_crud: UserRepository = Depends(get_repository(UserRepository)),
+    user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
     try:
-        user = await authenticate_user(
-            form_data.username, form_data.password, user_crud
-        )
+        user = await authenticate_user(form_data.username, form_data.password, user_repository)
     except UserIsNotAuthenticated as ex:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

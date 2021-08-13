@@ -81,9 +81,7 @@ async def get_current_user(
     return user
 
 
-async def authenticate_user(
-        username: str, password: str, user_repository: UserRepository
-) -> _DB_User:
+async def authenticate_user(username: str, password: str, user_repository: UserRepository) -> _DB_User:
     user = await user_repository.select_one(user_repository.model.username == username)
     if not user or not verify_password(password, cast(str, user.password)):
         raise UserIsNotAuthenticated()

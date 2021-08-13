@@ -2,11 +2,13 @@ from typing import Any, Optional, Dict, no_type_check
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from api import setup_routers
+from api.v1.errors.validation_error import http422_error_handler
 from core.events import create_on_startup_handler, create_on_shutdown_handler
 from middlewares.process_time_middleware import add_process_time_header
 from services.database.models.base import DatabaseComponents
@@ -61,6 +63,9 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
         self.app.add_event_handler("startup", create_on_startup_handler(self.app))
         self.app.add_event_handler("shutdown", create_on_shutdown_handler(self.app))
 
+    def configure_exception_handlers(self) -> None:
+        self.app.add_exception_handler(RequestValidationError, http422_error_handler)
+
     def configure_application_state(self) -> None:
         components = DatabaseComponents(drivername="postgresql+asyncpg",
                                         username=self._settings.database.USER,
@@ -75,6 +80,7 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
         self.configure_application_state()
         self.configure_templates()
         self.configure_openapi_schema()
+        self.configure_exception_handlers()
         # We run `configure_events(...)` in the end of configure method, because we need to pass to on_shutdown and
         # on_startup handlers configured application
         self.configure_events()
