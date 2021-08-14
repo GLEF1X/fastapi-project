@@ -11,7 +11,7 @@ from jose import jwt, JWTError
 from pydantic import ValidationError
 from starlette import status
 
-from src.api.v1.dependencies.database import get_repository
+from src.api.v1.dependencies.database import UserRepositoryDependencyMarker
 from src.services.database.repositories.user import UserRepository
 from src.services.misc import User, TokenData
 from src.services.utils.jwt import SECRET_KEY, ALGORITHM, oauth2_scheme
@@ -19,7 +19,7 @@ from src.services.utils.jwt import SECRET_KEY, ALGORITHM, oauth2_scheme
 
 async def get_current_user(  # TODO refactor this function(decomposition)
         token: str = Depends(oauth2_scheme),
-        user_repository: UserRepository = Depends(get_repository(UserRepository)),
+        user_repository: UserRepository = Depends(UserRepositoryDependencyMarker),
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

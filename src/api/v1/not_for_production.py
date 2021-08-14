@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Query, Path
 from starlette import status
 from starlette.responses import JSONResponse
 
-from src.api.v1.dependencies.database import get_repository
+from src.api.v1.dependencies.database import ProductRepositoryDependencyMarker
 from src.api.v1.dependencies.security import get_current_user
 from src.services.database.repositories.product import ProductRepository
 from src.services.misc import Product
@@ -27,9 +27,9 @@ api_router = APIRouter(dependencies=[Depends(get_current_user)])
 )
 async def get_product_by_id(
         product_id: int = Path(...),
-        product_repository: ProductRepository = Depends(get_repository(ProductRepository)),
+        product_repository: ProductRepository = Depends(ProductRepositoryDependencyMarker),
 ) -> Union[JSONResponse, Product]:
-    product = await product_repository._select_one(product_repository.model.id == product_id)
+    product = await product_repository.get_product_by_id(product_id)
     return get_pydantic_model_or_return_raw_response(Product, product)
 
 

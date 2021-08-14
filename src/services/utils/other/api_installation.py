@@ -8,11 +8,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from src.api import setup_routers
+from src.api.v1.dependencies.database import UserRepositoryDependencyMarker, ProductRepositoryDependencyMarker
 from src.api.v1.errors.http_error import http_error_handler
 from src.api.v1.errors.validation_error import http422_error_handler
 from src.core.events import create_on_startup_handler, create_on_shutdown_handler
 from src.middlewares.process_time_middleware import add_process_time_header
 from src.services.database.models.base import DatabaseComponents
+from src.services.database.repositories.product import ProductRepository
+from src.services.database.repositories.user import UserRepository
 from src.services.utils.other.builder_base import BaseApplicationBuilder
 from views import home
 from views.home import api_router
@@ -76,6 +79,12 @@ class DevelopmentApplicationBuilder(BaseApplicationBuilder):
                                         database=self._settings.database.NAME)
         self.app.state.db_components = components
         self.app.state.settings = self._settings
+        self.app.dependency_overrides.update(
+            {
+                UserRepositoryDependencyMarker: lambda: UserRepository(components.sessionmaker),
+                ProductRepositoryDependencyMarker: lambda: ProductRepository(components.sessionmaker)
+            }
+        )
 
     def configure(self) -> None:
         self.configure_routes()

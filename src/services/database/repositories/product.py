@@ -27,3 +27,6 @@ class ProductRepository(BaseRepository[Product]):
             created_at=created_at,
             id=product_id
         ))
+
+    async def get_product_by_id(self, product_id: int) -> Model:
+        return wrap_result(await self._select_one(self.model.id == product_id))

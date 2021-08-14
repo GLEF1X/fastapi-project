@@ -6,21 +6,10 @@
 
 from __future__ import annotations
 
-from typing import Callable, Type, cast
 
-from fastapi import Depends
-from sqlalchemy.orm import sessionmaker
-from starlette.requests import Request
-
-from src.services.database.repositories.base import BaseRepository
+class UserRepositoryDependencyMarker:  # pragma: no cover
+    pass
 
 
-def _get_session_maker(request: Request) -> sessionmaker:
-    return cast(sessionmaker, request.app.state.db_components.sessionmaker)
-
-
-def get_repository(repo_type: Type[BaseRepository]) -> Callable[[sessionmaker], BaseRepository]:
-    def _get_repo(conn: sessionmaker = Depends(_get_session_maker)) -> BaseRepository:
-        return repo_type(conn)
-
-    return _get_repo
+class ProductRepositoryDependencyMarker:  # pragma: no cover
+    pass

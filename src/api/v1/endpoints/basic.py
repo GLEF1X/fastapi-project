@@ -1,16 +1,12 @@
-from typing import Optional
+from fastapi import APIRouter, Depends
 
-from fastapi import Header, APIRouter, Depends
-
-from src.api.v1.dependencies.security import get_current_user
-from src.services.misc.schemas import TestResponse, User
+from src.api.v1.dependencies.database import UserRepositoryDependencyMarker
+from src.services.database.repositories.user import UserRepository
+from src.services.misc.schemas import TestResponse
 
 fundamental_api_router = APIRouter(prefix="/api/v1")
 
 
-@fundamental_api_router.get("/test", tags=["Test"], response_model=TestResponse, include_in_schema=False)
-async def test(
-    user: User = Depends(get_current_user),
-    user_agent: Optional[str] = Header(...),
-):
-    return {"success": True, "User-Agent": user_agent}
+@fundamental_api_router.post("/test", tags=["Test"], response_model=TestResponse)
+async def test(a: UserRepository = Depends(UserRepositoryDependencyMarker)):
+    return {"success": True}
