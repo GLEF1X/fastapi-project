@@ -5,8 +5,8 @@ import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from core import ApplicationSettings
-from services.database import User
+from src.core import ApplicationSettings
+from src.services.database import User
 
 pytestmark = pytest.mark.asyncio
 

@@ -4,13 +4,4 @@
 #  Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
 #  Vestibulum commodo. Ut rhoncus gravida arcu.
 
-from src.services.utils.other.api_installation import (
-    Director,
-    DevApplicationBuilder,
-)
-
-director = Director(DevApplicationBuilder())
-app = director.configure()
-
-if __name__ == "__main__":
-    director.run(debug=True, port=5000, log_level="info")
+from __future__ import annotations
