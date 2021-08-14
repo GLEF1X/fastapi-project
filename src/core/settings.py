@@ -140,7 +140,6 @@ class ApplicationSettings(BaseSettings):
     database: DatabaseSettings = DatabaseSettings()
     fastapi: FastAPISettings = FastAPISettings()  # noqa
     redis: RedisSettings = RedisSettings()
-    api: APIServicesSettings = APIServicesSettings()
     tests: TestSettings = TestSettings()
 
     class Config:

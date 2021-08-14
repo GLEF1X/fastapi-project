@@ -1,4 +1,4 @@
-name: pytesting workflow
+name: testing workflow
 
 on:
   push:
@@ -7,12 +7,22 @@ on:
     branches: [ dev ]
 
 jobs:
-  build:
-
+  lint:
     runs-on: ubuntu-latest
     env:
       COVERAGE_SINGLE: 60
       COVERAGE_TOTAL: 60
+    services:
+      postgres:
+        image: postgres:12-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
 
     steps:
       - uses: actions/checkout@v2
@@ -61,3 +71,18 @@ jobs:
       - name: Run tests
         run: |
           poetry run pytest .
+        env:
+          DB_USER: postgres
+          DB_NAME: postgres
+          DB_HOST: localhost
+          DB_PASS: postgres
+          # FastAPI config
+          APP_NAME: FastAPI
+          API_VERSION: 0.0.1
+          DOCS_URL: /docs
+          REDOC_URL: /redoc
+          DEFAULT_OPEN_API_ROOT: /openapi.json
+          IS_PRODUCTION: False
+          # Redis config
+          REDIS_HOST: localhost
+          REDIS_PASSWORD: password
