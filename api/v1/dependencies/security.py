@@ -6,49 +6,15 @@
 
 from __future__ import annotations
 
-import datetime
-from typing import Final, Dict, Any, Optional, cast
-
 from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 from pydantic import ValidationError
 from starlette import status
 
 from api.v1.dependencies.database import get_repository
-from services.database import User as _DB_User
 from services.database.repositories.user import UserRepository
 from services.misc import User, TokenData
-from services.utils.exceptions import UserIsNotAuthenticated
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/oauth")
-SECRET_KEY: Final[
-    str
-] = "d9721f6c989b5165f273e6c78bdbc67b169097095023118bd7709ec2b613868c"
-ALGORITHM: Final[str] = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES: Final[int] = 30
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-
-def create_access_token(
-        data: Dict[Any, Any], expires_delta: Optional[datetime.timedelta] = None
-) -> str:
-    to_encode = data.copy()
-    if expires_delta is not None:
-        expire = datetime.datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+from services.utils.jwt import SECRET_KEY, ALGORITHM, oauth2_scheme
 
 
 async def get_current_user(
@@ -74,11 +40,4 @@ async def get_current_user(
             raise ValidationError
     except ValidationError:
         raise credentials_exception
-    return user
-
-
-async def authenticate_user(username: str, password: str, user_repository: UserRepository) -> _DB_User:
-    user: User = await user_repository.get_user_by_username(username)
-    if not user or not verify_password(password, cast(str, user.password)):
-        raise UserIsNotAuthenticated()
     return user

@@ -2,6 +2,7 @@ import asyncio
 from logging.config import fileConfig
 from typing import no_type_check
 
+import nest_asyncio
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.engine import URL
@@ -91,4 +92,5 @@ async def run_migrations_online():
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    asyncio.run(run_migrations_online())
+    nest_asyncio.apply()
+    asyncio.get_event_loop().run_until_complete(run_migrations_online())

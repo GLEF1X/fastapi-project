@@ -17,7 +17,7 @@ api_router = APIRouter()
 
 
 # noinspection PyUnusedLocal
-@api_router.get("/users/{user_id}/info", response_model=User, tags=["Users"])
+@api_router.get("/users/{user_id}/info", response_model=User, tags=["Users"], name="users:get_user_info")
 async def get_user_info(
         user_id: int,
         user: User = Depends(get_current_user),
@@ -62,7 +62,7 @@ async def create_user(
     """*Create a new user in database"""
     payload = user.dict(exclude_unset=True)
     try:
-        await user_repository.add(**payload)
+        await user_repository.add_user(**payload)
     except IntegrityError:
         return bad_response("A user with such core is already registered.")
 

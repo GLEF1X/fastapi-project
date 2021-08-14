@@ -73,6 +73,7 @@ class DevApplicationBuilder(BaseApplicationBuilder):
                                         host=self._settings.database.HOST,
                                         database=self._settings.database.NAME)
         self.app.state.db_components = components
+        self.app.state.settings = self._settings
 
     def configure(self) -> None:
         self.configure_routes()

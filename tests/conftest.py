@@ -1,92 +1,102 @@
-import asyncio
-from typing import Generator, Any, AsyncGenerator, cast, Dict
-from unittest import mock
-from unittest.mock import Mock
+import pathlib
+import time
 
 import pytest
-from _pytest.fixtures import FixtureRequest
+from alembic import config as alembic_config, command
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
+from sqlalchemy.orm import sessionmaker
 
-from core import ApplicationSettings
 from services.database import User
+from services.database.models import SizeEnum
+from services.database.repositories.product import ProductRepository
 from services.database.repositories.user import UserRepository
-from services.utils.other.api_installation import (
-    DevApplicationBuilder,
-    Director,
-)
-from api.v1.dependencies.security import get_password_hash
-
-pytestmark = pytest.mark.asyncio
+from services.utils import jwt
+from services.utils.other.api_installation import DevApplicationBuilder, Director
 
 
-@pytest.fixture(scope="module")
-def event_loop(
-        request: FixtureRequest,
-) -> Generator[asyncio.AbstractEventLoop, Any, Any]:
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+@pytest.fixture()
+def path_to_alembic_ini() -> str:
+    return str(pathlib.Path(__name__).absolute().parent.parent.parent / "alembic.ini")
 
 
-@pytest.fixture(scope="module")
-def app() -> Generator[FastAPI, Any, Any]:
+@pytest.fixture()
+def path_to_migrations() -> str:
+    return str(pathlib.Path(__name__).absolute().parent.parent.parent / "services" / "database" / "migrations")
+
+
+@pytest.fixture(autouse=True)
+async def apply_migrations(path_to_alembic_ini: str, path_to_migrations: str):
+    alembic_cfg = alembic_config.Config(path_to_alembic_ini)
+    alembic_cfg.set_main_option('script_location', path_to_migrations)
+    command.upgrade(alembic_cfg, 'head')
+    yield
+    command.downgrade(alembic_cfg, 'base')
+
+
+@pytest.fixture()
+def app(apply_migrations: None):
     director = Director(DevApplicationBuilder())
-    yield director.configure()
+    return director.configure()
 
 
-@pytest.fixture(scope="module")
-def settings(app: FastAPI) -> Generator[ApplicationSettings, Any, Any]:
-    yield cast(ApplicationSettings, app.settings)  # type: ignore
+@pytest.fixture()
+async def initialized_app(app: FastAPI):
+    async with LifespanManager(app):
+        yield app
 
 
-@pytest.fixture(scope="module")
-async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, Any]:
-    async with AsyncClient(app=app, base_url="http://test") as client:  # noqa
+@pytest.fixture()
+def session_maker(initialized_app: FastAPI) -> sessionmaker:
+    return initialized_app.state.db_components.sessionmaker
+
+
+@pytest.fixture()
+async def client(initialized_app: FastAPI):
+    async with AsyncClient(
+            app=initialized_app,
+            base_url="http://test",
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "FastAPI/Test/0.0.1"
+            },
+    ) as client:
         yield client
 
 
-@pytest.fixture(scope="module", name="auth_user")
-def auth_user(settings: ApplicationSettings) -> User:
-    # noinspection PyArgumentList
-    return User(
-        id=1,
-        username="GLEF1X",
-        first_name="Глеб",
-        last_name="Гаранин",
-        email=settings.tests.FIRST_SUPERUSER,
-        balance=1,
-        password=get_password_hash(settings.tests.FIRST_SUPERUSER_PASSWORD),
+@pytest.fixture()
+async def user_for_test(session_maker: sessionmaker):
+    repository = UserRepository(session_maker)
+    return await repository.add_user(email="test@test.com", password="password", username="username",
+                                    first_name="Gleb", last_name="Garanin", phone_number="+7657676556",
+                                    balance=666)
+
+
+@pytest.fixture()
+async def product_for_test(session_maker: sessionmaker):
+    product_repository = ProductRepository(session_maker)
+    return await product_repository.add_product(
+        name="Pencil",
+        unit_price=50.00,
+        size=SizeEnum.SMALL
     )
 
 
-@pytest.fixture(scope="module", name="token")
-async def access_token_fixture(
-        client: AsyncClient, app: FastAPI, settings: ApplicationSettings, auth_user
-) -> str:
-    login_data = {
-        "username": settings.tests.FIRST_SUPERUSER,
-        "password": settings.tests.FIRST_SUPERUSER_PASSWORD,
+@pytest.fixture()
+def token(user_for_test: User):
+    return jwt.create_access_token_for_user(user_for_test)
+
+
+@pytest.fixture(name="settings")
+def application_settings_fixture(app: FastAPI):
+    return app.state.settings
+
+
+@pytest.fixture()
+def authorized_client(client: AsyncClient, token: str) -> AsyncClient:
+    client.headers = {
+        "Authorization": f"Bearer {token}",
+        **client.headers,
     }
-    repository_mock = Mock(spec=UserRepository)
-    repository_mock.select_one.return_value = auth_user
-    with app.container.services.user_repository.override(repository_mock):  # type: ignore  # noqa
-        response = await client.post(
-            settings.fastapi.API_V1_STR + "/oauth",
-            data=login_data,
-            headers={"content-type": "application/x-www-form-urlencoded"},
-        )
-    json_ = response.json()
-    return json_["access_token"]
-
-
-@pytest.fixture(name="auth_headers", scope="module")
-def auth_headers(token: str) -> Dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
-
-
-@pytest.fixture(name="authorized_mock", scope="module")
-def authorized_mock(auth_user: User) -> Mock:
-    repo_mock = mock.Mock(spec=UserRepository)
-    repo_mock.select_one.return_value = auth_user
-    return repo_mock
+    return client

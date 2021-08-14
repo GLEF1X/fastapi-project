@@ -21,6 +21,6 @@ def create_on_startup_handler(app: FastAPI) -> Callable[..., Coroutine[Any, Any,
 
 def create_on_shutdown_handler(app: FastAPI) -> Callable[..., Coroutine[Any, Any, None]]:
     async def on_shutdown() -> None:
-        await app.state.components.engine.dispose()
+        await app.state.db_components.engine.dispose()
 
     return on_shutdown

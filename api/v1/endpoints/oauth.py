@@ -7,7 +7,7 @@ from starlette import status
 from api.v1.dependencies.database import get_repository
 from services.database.repositories.user import UserRepository
 from services.utils.exceptions import UserIsNotAuthenticated
-from api.v1.dependencies.security import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, authenticate_user
+from services.utils.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token, authenticate_user
 
 api_router = APIRouter()
 
@@ -26,7 +26,7 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         ) from ex
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
+    access_token = create_jwt_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}

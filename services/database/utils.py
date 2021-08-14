@@ -8,13 +8,15 @@ from __future__ import annotations
 
 import typing
 
-from services.database.repositories.base import Model
+if typing.TYPE_CHECKING:
+    from services.database.repositories.base import Model
 
 T = typing.TypeVar("T")
+Dictionary = typing.TypeVar("Dictionary", bound=typing.Dict[typing.Any, typing.Any])
 
 
 @typing.overload
-def wrap_result(result: typing.Any) -> Model: ...
+def wrap_result(result: typing.Any) -> "Model": ...
 
 
 @typing.overload
@@ -24,3 +26,7 @@ def wrap_result(result: typing.Any, cast_type: typing.Type[T]) -> T: ...
 # noinspection PyUnusedLocal
 def wrap_result(result, cast_type=None):
     return result
+
+
+def filter_none(kwargs: Dictionary) -> Dictionary:
+    return {k: v for k, v in kwargs.items() if v is not None}

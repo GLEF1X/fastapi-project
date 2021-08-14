@@ -1,3 +1,3 @@
-from api.v1.dependencies.security import oauth2_scheme
+from services.utils.jwt import oauth2_scheme
 
-__all__ = ()
+__all__ = ("oauth2_scheme", )

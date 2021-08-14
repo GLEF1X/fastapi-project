@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql import Executable
 
 from services.database.models.base import ASTERISK
+from services.database.utils import filter_none
 
 Model = typing.TypeVar("Model")
 TransactionContext = typing.AsyncContextManager[AsyncSessionTransaction]
@@ -54,17 +55,17 @@ class BaseRepository(ABC, typing.Generic[Model]):
         """Mypy friendly :function:`BaseRepository.transaction` representation"""
         return self.__transaction()
 
-    async def _insert(self, **values: typing.Any) -> typing.Dict[str, typing.Any]:
+    async def _insert(self, **values: typing.Any) -> Model:
         """Add model into database"""
         async with self._transaction:
             insert_stmt = (
                 insert(self.model)
-                    .values(**values)
+                    .values(**filter_none(values))
                     .on_conflict_do_nothing()
                     .returning(self.model)
             )
             result = (await self._session.execute(insert_stmt)).mappings().first()
-        return typing.cast(typing.Dict[str, typing.Any], result)
+        return self._convert_to_model(**typing.cast(typing.Dict[str, typing.Any], result))
 
     async def _select_all(self, *clauses: typing.Any) -> typing.List[Model]:
         """
@@ -125,7 +126,7 @@ class BaseRepository(ABC, typing.Generic[Model]):
 
     async def _delete(self, *clauses: typing.Any) -> typing.List[Model]:
         async with self._transaction:
-            stmt = delete(self.model).where(*clauses).returning("*")
+            stmt = delete(self.model).where(*clauses).returning(ASTERISK)
             result = (await self._session.execute(stmt)).scalars().all()
         return typing.cast(typing.List[Model], result)
 
@@ -133,3 +134,6 @@ class BaseRepository(ABC, typing.Generic[Model]):
         async with self._transaction:
             count = (await self._session.execute(func.count(ASTERISK))).scalars().first()
         return cast(int, count)
+
+    def _convert_to_model(self, **kwargs) -> Model:
+        return self.model(**kwargs)  # type: ignore

@@ -5,9 +5,8 @@ Revises:
 Create Date: 2021-07-25 12:01:57.724056
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "49f42a2f90bb"
@@ -80,4 +79,6 @@ def downgrade():
     op.drop_table("users")
     op.drop_index(op.f("ix_products_name"), table_name="products")
     op.drop_table("products")
+    size_enum = sa.Enum("SMALL", "MEDIUM", "LARGE", "VERY_LARGE", name="sizeenum")
+    size_enum.drop(bind=op.get_bind())
     # ### end Alembic commands ###

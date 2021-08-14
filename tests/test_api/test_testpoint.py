@@ -19,9 +19,8 @@ async def test_testpoint(
         settings: ApplicationSettings,
         authorized_mock: Mock
 ):
-    with app.container.services.user_repository.override(authorized_mock):  # type: ignore  # noqa
-        response = await client.get(
-            settings.fastapi.API_V1_STR + "/test", headers=auth_headers
-        )
+    response = await client.get(
+        settings.fastapi.API_V1_STR + "/test", headers=auth_headers
+    )
 
     assert response.status_code == 200

@@ -7,28 +7,24 @@ from httpx import AsyncClient
 
 from core import ApplicationSettings
 from services.database import User
-from services.database.repositories.user import UserRepository
 
 pytestmark = pytest.mark.asyncio
 
 
-async def test_create_user(client: AsyncClient, app: FastAPI, settings: ApplicationSettings) -> None:
-    repository_mock = mock.Mock(spec=UserRepository)
-    repository_mock.add.return_value = None
-    with app.container.services.user_repository.override(repository_mock):  # type: ignore
-        response = await client.put(
-            "/api/v1/users/create",
-            headers={"User-Agent": "Test"},
-            json={
-                "first_name": "Gleb",
-                "last_name": "Garanin",
-                "username": "GLEF1X",
-                "phone_number": "+7900232132",
-                "email": "glebgar567@gmail.com",
-                "password": "qwerty12345",
-                "balance": 5,
-            },
-        )
+async def test_create_user(authorized_client: AsyncClient, app: FastAPI) -> None:
+    response = await authorized_client.put(
+        "/api/v1/users/create",
+        headers={"User-Agent": "Test"},
+        json={
+            "first_name": "Gleb",
+            "last_name": "Garanin",
+            "username": "GLEF1X",
+            "phone_number": "+7900232132",
+            "email": "glebgar567@gmail.com",
+            "password": "qwerty12345",
+            "balance": 5,
+        },
+    )
     assert response.status_code == 200
     assert response.json() == {"success": True, "User-Agent": "Test"}
 
@@ -46,14 +42,8 @@ async def test_users_count(client: AsyncClient, auth_headers: Dict[str, str], ap
     assert isinstance(response.json().get("count"), int)
 
 
-async def test_get_user_info(client: AsyncClient, auth_headers: Dict[str, str], app: FastAPI,
-                             settings: ApplicationSettings, auth_user: User, authorized_mock: mock.Mock):
-    with app.container.services.user_repository.override(authorized_mock):  # type: ignore
-        response = await client.get(
-            settings.fastapi.API_V1_STR + f"/users/{auth_user.id}/info",
-            headers={"User-Agent": "Test", **auth_headers},
-        )
-
+async def test_get_user_info(authorized_client: AsyncClient, settings: ApplicationSettings, user_for_test: User):
+    response = await authorized_client.get(settings.fastapi.API_V1_STR + f"/users/{user_for_test.id}/info")
     assert response.status_code == 200
 
 
