@@ -28,5 +28,6 @@ def wrap_result(result, cast_type=None):
     return result
 
 
-def filter_none(kwargs: Dictionary) -> Dictionary:
-    return {k: v for k, v in kwargs.items() if v is not None}
+@typing.no_type_check
+def filter_payload(kwargs):
+    return {k: v for k, v in kwargs.items() if v is not None and v not in ['cls', 'self']}

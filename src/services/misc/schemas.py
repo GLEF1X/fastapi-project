@@ -54,6 +54,9 @@ class Product(BaseModel):
         keep_untouched = ()
         use_enum_values = True
 
+    def patch_enum_values(self) -> None:
+        self.Config.use_enum_values = False
+
 
 class DefaultResponse(BaseModel):
     error: str

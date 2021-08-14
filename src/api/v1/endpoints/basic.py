@@ -8,7 +8,7 @@ from src.services.misc.schemas import TestResponse, User
 fundamental_api_router = APIRouter(prefix="/api/v1")
 
 
-@fundamental_api_router.get("/test", tags=["Test"], response_model=TestResponse)
+@fundamental_api_router.get("/test", tags=["Test"], response_model=TestResponse, include_in_schema=False)
 async def test(
     user: User = Depends(get_current_user),
     user_agent: Optional[str] = Header(...),

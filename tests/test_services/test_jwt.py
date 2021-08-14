@@ -16,7 +16,8 @@ from src.services.utils.jwt import (
     ALGORITHM,
     create_access_token_for_user,
     create_jwt_token,
-    get_username_from_token, SECRET_KEY
+    get_username_from_token,
+    SECRET_KEY
 )
 
 

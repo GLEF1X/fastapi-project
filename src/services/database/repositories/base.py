@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql import Executable
 
 from src.services.database.models.base import ASTERISK
-from src.services.database.utils import filter_none
+from src.services.database.utils import filter_payload
 
 Model = typing.TypeVar("Model")
 TransactionContext = typing.AsyncContextManager[AsyncSessionTransaction]
@@ -60,7 +60,7 @@ class BaseRepository(ABC, typing.Generic[Model]):
         async with self._transaction:
             insert_stmt = (
                 insert(self.model)
-                    .values(**filter_none(values))
+                    .values(**filter_payload(values))
                     .on_conflict_do_nothing()
                     .returning(self.model)
             )

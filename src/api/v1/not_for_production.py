@@ -22,6 +22,7 @@ api_router = APIRouter()
     responses={
         200: {"model": Product},
     },
+    include_in_schema=False
 )
 async def get_product_by_id(
         product_id: int = Path(...),
@@ -33,7 +34,7 @@ async def get_product_by_id(
     return await get_pydantic_model_or_raise_exception(Product, product)
 
 
-@api_router.get("/test_api/{user_id}/items/{item_id}", status_code=status.HTTP_200_OK)
+@api_router.get("/test_api/{user_id}/items/{item_id}", status_code=status.HTTP_200_OK, include_in_schema=False)
 async def read_user_item(
         user_id: int,
         item_id: str,

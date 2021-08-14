@@ -5,6 +5,7 @@ from decimal import Decimal
 from src.services.database import Product
 from src.services.database.models import SizeEnum
 from src.services.database.repositories.base import BaseRepository, Model
+from src.services.database.utils import wrap_result
 
 
 class ProductRepository(BaseRepository[Product]):
@@ -18,11 +19,11 @@ class ProductRepository(BaseRepository[Product]):
                           description: typing.Optional[str] = None,
                           created_at: typing.Optional[datetime] = None
                           ) -> Model:
-        return await self._insert(
+        return wrap_result(await self._insert(
             name=name,
             unit_price=unit_price,
             size=size,
             description=description,
             created_at=created_at,
             id=product_id
-        )
+        ))

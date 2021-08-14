@@ -12,7 +12,7 @@ from src.services.utils.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token
 api_router = APIRouter()
 
 
-@api_router.post("/oauth", tags=["Test"], name="oauth:login")
+@api_router.post("/oauth", tags=["Oauth & Oauth2"], name="oauth:login")
 async def login(
         form_data: OAuth2PasswordRequestForm = Depends(),
         user_repository: UserRepository = Depends(get_repository(UserRepository)),

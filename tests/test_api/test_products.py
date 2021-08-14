@@ -18,7 +18,6 @@ pytestmark = pytest.mark.asyncio
 
 async def test_create_product(authorized_client: AsyncClient, app: FastAPI):
     product = Product(name="blouse", unit_price=50.00, description="Pretty blouse", size=SizeEnum.SMALL)
-    product.Config.use_enum_values = False
-    response = await authorized_client.put(app.url_path_for("products:create_product"),
-                                           json=product.dict())
+    product.patch_enum_values()
+    response = await authorized_client.put(app.url_path_for("products:create_product"), json=product.dict())
     assert response.status_code == 201
