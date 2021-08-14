@@ -6,21 +6,21 @@
 
 from __future__ import annotations
 
-import functools
+from typing import Callable, Coroutine, Any
 
 from fastapi import FastAPI
 
 
-def create_on_startup_handler(app: FastAPI):
-    # noinspection PyUnusedLocal
-    async def on_startup(application: FastAPI) -> None:
+# noinspection PyUnusedLocal
+def create_on_startup_handler(app: FastAPI) -> Callable[..., Coroutine[Any, Any, None]]:
+    async def on_startup() -> None:
         ...
 
-    return functools.partial(on_startup, application=app)
+    return on_startup
 
 
-def create_on_shutdown_handler(app: FastAPI):
-    async def on_shutdown(application: FastAPI) -> None:
-        await application.state.components.engine.dispose()
+def create_on_shutdown_handler(app: FastAPI) -> Callable[..., Coroutine[Any, Any, None]]:
+    async def on_shutdown() -> None:
+        await app.state.components.engine.dispose()
 
-    return functools.partial(on_shutdown, application=app)
+    return on_shutdown

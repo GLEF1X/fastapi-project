@@ -12,7 +12,7 @@ from core import ApplicationSettings
 from services.database import User
 from services.database.repositories.user import UserRepository
 from services.utils.other.api_installation import (
-    ApplicationConfiguratorBuilder,
+    DevApplicationBuilder,
     Director,
 )
 from api.v1.dependencies.security import get_password_hash
@@ -31,7 +31,7 @@ def event_loop(
 
 @pytest.fixture(scope="module")
 def app() -> Generator[FastAPI, Any, Any]:
-    director = Director(ApplicationConfiguratorBuilder())
+    director = Director(DevApplicationBuilder())
     yield director.configure()
 
 

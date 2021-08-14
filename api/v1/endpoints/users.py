@@ -5,13 +5,13 @@ from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from api.v1.dependencies.database import get_repository
+from api.v1.dependencies.security import get_current_user
 from services.database.exceptions import UnableToDelete
 from services.database.repositories.user import UserRepository
 from services.misc import User, DefaultResponse
 from services.misc.schemas import ObjectCount, SimpleResponse
 from services.utils.endpoints_specs import UserBodySpec
 from services.utils.responses import bad_response, not_found
-from api.v1.dependencies.security import get_current_user
 
 api_router = APIRouter()
 
@@ -26,7 +26,7 @@ async def get_user_info(
 ):
     if not user_agent:
         return bad_response()
-    entry = await user_repository.select_one(user_repository.model.id == user_id)
+    entry: User = await user_repository.get_user_by_id(user_id)
     try:
         return User.from_orm(entry)
     except ValidationError:
@@ -47,7 +47,7 @@ async def get_all_users(
 ):
     if not user_agent:
         return bad_response()
-    users = await user_repository.select_all()
+    users: List[User] = await user_repository.get_all_users()
     return users
 
 
@@ -84,7 +84,7 @@ async def get_users_count(
 ):
     if not user_agent:
         return bad_response()
-    return {"count": await user_repository.count()}
+    return {"count": await user_repository.get_users_count()}
 
 
 # noinspection PyUnusedLocal
@@ -104,7 +104,7 @@ async def delete_user(
     if not user_agent:
         return bad_response()
     try:
-        await user_repository.delete(user_repository.model.id == user_id)
+        await user_repository.delete_user(user_id=user_id)
     except UnableToDelete:
         raise HTTPException(
             status_code=400, detail=f"There isn't entry with id={user_id}"

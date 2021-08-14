@@ -69,11 +69,7 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
     try:
-        user = User.from_orm(
-            await user_repository.select_one(
-                user_repository.model.username == token_data.username
-            )
-        )
+        user = User.from_orm(await user_repository.get_user_by_username(token_data.username))
         if user is None:
             raise ValidationError
     except ValidationError:
@@ -82,7 +78,7 @@ async def get_current_user(
 
 
 async def authenticate_user(username: str, password: str, user_repository: UserRepository) -> _DB_User:
-    user = await user_repository.select_one(user_repository.model.username == username)
+    user: User = await user_repository.get_user_by_username(username)
     if not user or not verify_password(password, cast(str, user.password)):
         raise UserIsNotAuthenticated()
     return user

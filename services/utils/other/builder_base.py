@@ -8,7 +8,7 @@ from core import ApplicationSettings
 from core.settings import TEMPLATES_DIR
 
 
-class BaseApplicationConfiguratorBuilder(abc.ABC):
+class BaseApplicationBuilder(abc.ABC):
     app: FastAPI
 
     def __init__(self) -> None:

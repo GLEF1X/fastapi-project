@@ -27,7 +27,7 @@ async def get_product_by_id(
         product_id: int = Path(...),
         product_repository: ProductRepository = Depends(get_repository(ProductRepository)),
 ) -> Product:
-    product = await product_repository.select_one(
+    product = await product_repository._select_one(
         product_repository.model.id == product_id
     )
     return await get_pydantic_model_or_raise_exception(Product, product)

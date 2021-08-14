@@ -36,5 +36,5 @@ async def create_product(
     """
     if not user_agent:
         return bad_response()
-    await product_crud.insert(**product.dict(exclude_unset=True))
+    await product_crud.add_product(**product.dict(exclude_unset=True))
     return Response(status_code=201, headers={"User-Agent": user_agent})

@@ -12,18 +12,18 @@ from api.v1.errors.validation_error import http422_error_handler
 from core.events import create_on_startup_handler, create_on_shutdown_handler
 from middlewares.process_time_middleware import add_process_time_header
 from services.database.models.base import DatabaseComponents
-from services.utils.other.builder_base import BaseApplicationConfiguratorBuilder
+from services.utils.other.builder_base import BaseApplicationBuilder
 from views import home
 from views.home import api_router
 
 ALLOWED_METHODS = ["POST", "PUT", "DELETE", "GET"]
 
 
-class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
+class DevApplicationBuilder(BaseApplicationBuilder):
     """Class, that provides the installation of FastAPI application"""
 
     def __init__(self) -> None:
-        super(ApplicationConfiguratorBuilder, self).__init__()
+        super(DevApplicationBuilder, self).__init__()
         self.app = FastAPI(**self._settings.fastapi.api_kwargs)  # type: ignore
         self.app.settings = self._settings  # type: ignore
 
@@ -87,17 +87,17 @@ class ApplicationConfiguratorBuilder(BaseApplicationConfiguratorBuilder):
 
 
 class Director:
-    def __init__(self, builder: BaseApplicationConfiguratorBuilder) -> None:
-        if not isinstance(builder, BaseApplicationConfiguratorBuilder):
+    def __init__(self, builder: BaseApplicationBuilder) -> None:
+        if not isinstance(builder, BaseApplicationBuilder):
             raise TypeError("You passed on invalid builder")
         self._builder = builder
 
     @property
-    def builder(self) -> BaseApplicationConfiguratorBuilder:
+    def builder(self) -> BaseApplicationBuilder:
         return self._builder
 
     @builder.setter
-    def builder(self, new_builder: BaseApplicationConfiguratorBuilder):
+    def builder(self, new_builder: BaseApplicationBuilder):
         self._builder = new_builder
 
     def configure(self) -> FastAPI:
@@ -107,11 +107,13 @@ class Director:
     def run(self, **kwargs) -> None:
         """
         !NOT FOR PRODUCTION! \n
-        Function, which start an application
+        Function, which start an application \n
+        Instead of it use gunicorn with uvicorn workers. e.g. \n
+        gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app
 
         :return: None, just run application with uvicorn
         """
         uvicorn.run(self._builder.app, **kwargs)  # type: ignore  # noqa
 
 
-__all__ = ("Director", "ApplicationConfiguratorBuilder")
+__all__ = ("Director", "DevApplicationBuilder")

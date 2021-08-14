@@ -31,6 +31,7 @@ sqlalchemy2-stubs = "^0.0.2a8"
 httpx = "^0.18.2"
 pytest-mock = "^3.6.1"
 manage-fastapi = "^1.0.1"
+gunicorn = "^20.1.0"
 
 [tool.poetry.dev-dependencies]
 alembic = "^1.6.5"

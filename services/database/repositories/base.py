@@ -19,16 +19,14 @@ TransactionContext = typing.AsyncContextManager[AsyncSessionTransaction]
 
 class BaseRepository(ABC, typing.Generic[Model]):
     """
-    Base class of hierarchy of repositories
-
+    We define a base class for the repository hierarchy, making it possible to use the base CRUD methods,
+    so that they do not creep into inherited classes
     """
 
     # You need to define this variable in child classes
     model: typing.ClassVar[typing.Type[Model]]
 
-    def __init__(
-        self, session_or_pool: typing.Union[sessionmaker, AsyncSession]
-    ) -> None:
+    def __init__(self, session_or_pool: typing.Union[sessionmaker, AsyncSession]) -> None:
         """
 
         :param session_or_pool: async session from async context manager
@@ -38,16 +36,11 @@ class BaseRepository(ABC, typing.Generic[Model]):
         else:
             self._session = session_or_pool
 
-    @property
-    def session(self) -> AsyncSession:
-        """returns :class:`AsyncSession`"""
-        return self._session
-
     @contextlib.asynccontextmanager
-    async def _transaction(self) -> typing.AsyncGenerator:
+    async def __transaction(self) -> typing.AsyncGenerator:
         """Yield an :class:`_asyncio.AsyncSessionTransaction` object."""
-        if not self.session.in_transaction() and self.session.is_active:
-            async with self.session.begin() as transaction:  # type: AsyncSessionTransaction
+        if not self._session.in_transaction() and self._session.is_active:
+            async with self._session.begin() as transaction:  # type: AsyncSessionTransaction
                 yield transaction
         else:
             yield  # type: ignore
@@ -57,23 +50,23 @@ class BaseRepository(ABC, typing.Generic[Model]):
         return session.bulk_save_objects(*instances)
 
     @property
-    def transaction(self) -> TransactionContext:
+    def _transaction(self) -> TransactionContext:
         """Mypy friendly :function:`BaseRepository.transaction` representation"""
-        return self._transaction()
+        return self.__transaction()
 
-    async def insert(self, **values: typing.Any) -> typing.Dict[str, typing.Any]:
+    async def _insert(self, **values: typing.Any) -> typing.Dict[str, typing.Any]:
         """Add model into database"""
-        async with self.transaction:
+        async with self._transaction:
             insert_stmt = (
                 insert(self.model)
-                .values(**values)
-                .on_conflict_do_nothing()
-                .returning(self.model)
+                    .values(**values)
+                    .on_conflict_do_nothing()
+                    .returning(self.model)
             )
-            result = (await self.session.execute(insert_stmt)).mappings().first()
+            result = (await self._session.execute(insert_stmt)).mappings().first()
         return typing.cast(typing.Dict[str, typing.Any], result)
 
-    async def select_all(self, *clauses: typing.Any) -> typing.List[Model]:
+    async def _select_all(self, *clauses: typing.Any) -> typing.List[Model]:
         """
         Selecting data from table and filter by kwargs data
 
@@ -83,16 +76,16 @@ class BaseRepository(ABC, typing.Generic[Model]):
         query_model = self.model
         stmt = lambda_stmt(lambda: select(query_model))
         stmt += lambda s: s.where(*clauses)
-        async with self.transaction:
+        async with self._transaction:
             result = (
-                (await self.session.execute(typing.cast(Executable, stmt)))
-                .scalars()
-                .all()
+                (await self._session.execute(typing.cast(Executable, stmt)))
+                    .scalars()
+                    .all()
             )
 
         return result
 
-    async def select_one(self, *clauses: typing.Any) -> Model:
+    async def _select_one(self, *clauses: typing.Any) -> Model:
         """
         Return scalar value
 
@@ -101,16 +94,16 @@ class BaseRepository(ABC, typing.Generic[Model]):
         query_model = self.model
         stmt = lambda_stmt(lambda: select(query_model))
         stmt += lambda s: s.where(*clauses)
-        async with self.transaction:
+        async with self._transaction:
             result = (
-                (await self.session.execute(typing.cast(Executable, stmt)))
-                .scalars()
-                .first()
+                (await self._session.execute(typing.cast(Executable, stmt)))
+                    .scalars()
+                    .first()
             )
 
         return typing.cast(Model, result)
 
-    async def update(self, *clauses: typing.Any, **values: typing.Any) -> None:
+    async def _update(self, *clauses: typing.Any, **values: typing.Any) -> None:
         """
         Update values in database, filter by `telegram_id`
 
@@ -118,25 +111,25 @@ class BaseRepository(ABC, typing.Generic[Model]):
         :param values: key/value for update
         :return:
         """
-        async with self.transaction:
+        async with self._transaction:
             stmt = update(self.model).where(*clauses).values(**values).returning(None)
-            await self.session.execute(stmt)
+            await self._session.execute(stmt)
         return None
 
-    async def exists(self, *clauses: typing.Any) -> typing.Optional[bool]:
+    async def _exists(self, *clauses: typing.Any) -> typing.Optional[bool]:
         """Check is user exists in database"""
-        async with self.transaction:
+        async with self._transaction:
             stmt = exists(select(self.model).where(*clauses)).select()
-            result = (await self.session.execute(stmt)).scalar()
+            result = (await self._session.execute(stmt)).scalar()
         return typing.cast(typing.Optional[bool], result)
 
-    async def delete(self, *clauses: typing.Any) -> typing.List[Model]:
-        async with self.transaction:
+    async def _delete(self, *clauses: typing.Any) -> typing.List[Model]:
+        async with self._transaction:
             stmt = delete(self.model).where(*clauses).returning("*")
-            result = (await self.session.execute(stmt)).scalars().all()
+            result = (await self._session.execute(stmt)).scalars().all()
         return typing.cast(typing.List[Model], result)
 
-    async def count(self) -> int:
-        async with self.transaction:
-            count = (await self.session.execute(func.count(ASTERISK))).scalars().first()
+    async def _count(self) -> int:
+        async with self._transaction:
+            count = (await self._session.execute(func.count(ASTERISK))).scalars().first()
         return cast(int, count)
