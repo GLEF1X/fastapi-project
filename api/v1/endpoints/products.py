@@ -19,6 +19,7 @@ api_router = APIRouter()
     tags=["Product"],
     responses={400: {"model": DefaultResponse}},
     status_code=201,
+    name="products:create_product"
 )
 async def create_product(
         user: User,

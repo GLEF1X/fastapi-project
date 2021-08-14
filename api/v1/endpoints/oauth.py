@@ -12,10 +12,10 @@ from services.utils.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token, au
 api_router = APIRouter()
 
 
-@api_router.post("/oauth", tags=["Test"])
+@api_router.post("/oauth", tags=["Test"], name="oauth:login")
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    user_repository: UserRepository = Depends(get_repository(UserRepository)),
+        form_data: OAuth2PasswordRequestForm = Depends(),
+        user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
     try:
         user = await authenticate_user(form_data.username, form_data.password, user_repository)
@@ -26,7 +26,5 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         ) from ex
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_jwt_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
+    access_token = create_jwt_token(jwt_content={"sub": user.username}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}

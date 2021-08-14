@@ -39,6 +39,7 @@ async def get_user_info(
     response_model=List[User],
     responses={400: {"model": DefaultResponse}},
     tags=["Users"],
+    name="users:get_all_users"
 )
 async def get_all_users(
         user: User = Depends(get_current_user),
@@ -52,7 +53,8 @@ async def get_all_users(
 
 
 @api_router.put(
-    "/users/create", responses={400: {"model": DefaultResponse}}, tags=["Users"]
+    "/users/create", responses={400: {"model": DefaultResponse}}, tags=["Users"],
+    name="users:create_user"
 )
 async def create_user(
         user: User = UserBodySpec.item,
@@ -76,6 +78,7 @@ async def create_user(
     response_model=ObjectCount,
     tags=["Users"],
     summary="Return count of users in database",
+    name="users:get_users_count"
 )
 async def get_users_count(
         user_agent: Optional[str] = Header(None, title="User-Agent"),
@@ -94,6 +97,7 @@ async def get_users_count(
     tags=["Users"],
     summary="Delete user from database",
     response_model=SimpleResponse,
+    name="users:delete_user"
 )
 async def delete_user(
         user_id: int = Path(...),
