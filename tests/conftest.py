@@ -3,7 +3,6 @@ In conftest.py I mark most scope of fixtures as "module",
 because performance if migrations will be executed for each function(by default) will be poor
 """
 import asyncio
-import pathlib
 
 import pytest
 from alembic import config as alembic_config, command
@@ -29,15 +28,17 @@ def event_loop():
 
 @pytest.fixture(scope="module")
 def path_to_alembic_ini() -> str:
-    return str(pathlib.Path(__name__).absolute().parent.parent.parent / "alembic.ini")
+    from src.core import BASE_DIR  # local import only for tests
+    return str(BASE_DIR / "alembic.ini")
 
 
 @pytest.fixture(scope="module")
 def path_to_migrations_folder() -> str:
-    return str(pathlib.Path(__name__).absolute().parent.parent.parent / "src" / "services" / "database" / "migrations")
+    from src.core import BASE_DIR  # local import only for tests
+    return str(BASE_DIR / "src" / "services" / "database" / "migrations")
 
 
-@pytest.fixture(autouse=True, scope="module")
+@pytest.fixture(scope="module")
 async def apply_migrations(path_to_alembic_ini: str, path_to_migrations_folder: str):
     alembic_cfg = alembic_config.Config(path_to_alembic_ini)
     alembic_cfg.set_main_option('script_location', path_to_migrations_folder)

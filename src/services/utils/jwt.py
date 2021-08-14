@@ -12,6 +12,7 @@ from typing import Final, Dict, Any, Optional, cast
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from passlib.context import CryptContext
+from pydantic import ValidationError
 
 from src.services.database import User as _DB_User
 from src.services.database.repositories.user import UserRepository
@@ -57,3 +58,12 @@ async def authenticate_user(username: str, password: str, user_repository: UserR
     if not user or not verify_password(password, cast(str, user.password)):
         raise UserIsNotAuthenticated()
     return user
+
+
+def get_username_from_token(token: str, secret_key: str) -> str:
+    try:
+        return TokenData(**jwt.decode(token, secret_key, algorithms=[ALGORITHM])).username
+    except jwt.JWTError as decode_error:
+        raise ValueError("unable to decode JWT token") from decode_error
+    except ValidationError as validation_error:
+        raise ValueError("malformed payload in token") from validation_error

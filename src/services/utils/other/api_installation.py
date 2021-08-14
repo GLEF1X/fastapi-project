@@ -80,7 +80,6 @@ class DevApplicationBuilder(BaseApplicationBuilder):
         self.setup_middlewares()
         self.configure_application_state()
         self.configure_templates()
-        self.configure_openapi_schema()
         self.configure_exception_handlers()
         # We run `configure_events(...)` in the end of configure method, because we need to pass to on_shutdown and
         # on_startup handlers configured application
