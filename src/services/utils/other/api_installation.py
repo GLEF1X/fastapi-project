@@ -2,12 +2,13 @@ from typing import Any, Optional, Dict, no_type_check
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from src.api import setup_routers
+from src.api.v1.errors.http_error import http_error_handler
 from src.api.v1.errors.validation_error import http422_error_handler
 from src.core.events import create_on_startup_handler, create_on_shutdown_handler
 from src.middlewares.process_time_middleware import add_process_time_header
@@ -19,11 +20,11 @@ from views.home import api_router
 ALLOWED_METHODS = ["POST", "PUT", "DELETE", "GET"]
 
 
-class DevApplicationBuilder(BaseApplicationBuilder):
+class DevelopmentApplicationBuilder(BaseApplicationBuilder):
     """Class, that provides the installation of FastAPI application"""
 
     def __init__(self) -> None:
-        super(DevApplicationBuilder, self).__init__()
+        super(DevelopmentApplicationBuilder, self).__init__()
         self.app = FastAPI(**self._settings.fastapi.api_kwargs)  # type: ignore
         self.app.settings = self._settings  # type: ignore
 
@@ -65,6 +66,7 @@ class DevApplicationBuilder(BaseApplicationBuilder):
 
     def configure_exception_handlers(self) -> None:
         self.app.add_exception_handler(RequestValidationError, http422_error_handler)
+        self.app.add_exception_handler(HTTPException, http_error_handler)
 
     def configure_application_state(self) -> None:
         components = DatabaseComponents(drivername="postgresql+asyncpg",
@@ -116,4 +118,4 @@ class Director:
         uvicorn.run(self._builder.app, **kwargs)  # type: ignore  # noqa
 
 
-__all__ = ("Director", "DevApplicationBuilder")
+__all__ = ("Director", "DevelopmentApplicationBuilder")

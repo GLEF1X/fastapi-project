@@ -3,16 +3,13 @@
 #  Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
 #  Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
 #  Vestibulum commodo. Ut rhoncus gravida arcu.
-import subprocess
 
-from src.services.utils.other.api_installation import (
-    Director,
-    DevelopmentApplicationBuilder,
-)
+from __future__ import annotations
 
-director = Director(DevelopmentApplicationBuilder())
-app = director.configure()
+from fastapi import HTTPException
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
-if __name__ == "__main__":
-    subprocess.run(["gunicorn", "-w 4", "-k uvicorn.workers.UvicornWorker", "main:app"])
- 
+
+async def http_error_handler(_: Request, exc: HTTPException) -> JSONResponse:
+    return JSONResponse({"errors": [exc.detail]}, status_code=exc.status_code)

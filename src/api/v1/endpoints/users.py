@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import List
 
 from fastapi import Header, Path, HTTPException, Depends, APIRouter
 from pydantic import ValidationError
@@ -6,31 +6,28 @@ from sqlalchemy.exc import IntegrityError
 
 from src.api.v1.dependencies.database import get_repository
 from src.api.v1.dependencies.security import get_current_user
+from src.resources import api_string_templates
 from src.services.database.exceptions import UnableToDelete
 from src.services.database.repositories.user import UserRepository
 from src.services.misc import User, DefaultResponse
 from src.services.misc.schemas import ObjectCount, SimpleResponse
 from src.services.utils.endpoints_specs import UserBodySpec
-from src.services.utils.responses import bad_response, not_found
+from src.services.utils.responses import NotFoundJsonResponse, BadRequestJsonResponse
 
-api_router = APIRouter()
+api_router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 # noinspection PyUnusedLocal
 @api_router.get("/users/{user_id}/info", response_model=User, tags=["Users"], name="users:get_user_info")
 async def get_user_info(
         user_id: int,
-        user: User = Depends(get_current_user),
-        user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
-    if not user_agent:
-        return bad_response()
     entry: User = await user_repository.get_user_by_id(user_id)
     try:
         return User.from_orm(entry)
     except ValidationError:
-        return not_found(user_id)
+        return NotFoundJsonResponse(content=api_string_templates.USER_DOES_NOT_EXIST_ERROR)
 
 
 # noinspection PyUnusedLocal
@@ -41,13 +38,7 @@ async def get_user_info(
     tags=["Users"],
     name="users:get_all_users"
 )
-async def get_all_users(
-        user: User = Depends(get_current_user),
-        user_agent: Optional[str] = Header(None, title="User-Agent"),
-        user_repository: UserRepository = Depends(get_repository(UserRepository)),
-):
-    if not user_agent:
-        return bad_response()
+async def get_all_users(user_repository: UserRepository = Depends(get_repository(UserRepository))):
     users: List[User] = await user_repository.get_all_users()
     return users
 
@@ -58,7 +49,6 @@ async def get_all_users(
 )
 async def create_user(
         user: User = UserBodySpec.item,
-        user_agent: str = Header(..., title="User-Agent"),
         user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
     """*Create a new user in database"""
@@ -66,9 +56,9 @@ async def create_user(
     try:
         await user_repository.add_user(**payload)
     except IntegrityError:
-        return bad_response("A user with such core is already registered.")
+        return BadRequestJsonResponse(content=api_string_templates.USER_IS_ALREADY_FOLLOWED)
 
-    return {"success": True, "User-Agent": user_agent}
+    return {"success": True}
 
 
 # noinspection PyUnusedLocal
@@ -81,12 +71,8 @@ async def create_user(
     name="users:get_users_count"
 )
 async def get_users_count(
-        user_agent: Optional[str] = Header(None, title="User-Agent"),
-        user: User = Depends(get_current_user),
         user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
-    if not user_agent:
-        return bad_response()
     return {"count": await user_repository.get_users_count()}
 
 
@@ -101,12 +87,8 @@ async def get_users_count(
 )
 async def delete_user(
         user_id: int = Path(...),
-        user: User = Depends(get_current_user),
-        user_agent: Optional[str] = Header(None, title="User-Agent"),
         user_repository: UserRepository = Depends(get_repository(UserRepository)),
 ):
-    if not user_agent:
-        return bad_response()
     try:
         await user_repository.delete_user(user_id=user_id)
     except UnableToDelete:
