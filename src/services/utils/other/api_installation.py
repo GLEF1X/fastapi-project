@@ -77,7 +77,7 @@ class DevelopmentApplicationBuilder(BaseApplicationBuilder):
                                         password=self._settings.database.PASS,
                                         host=self._settings.database.HOST,
                                         database=self._settings.database.NAME)
-        self.app.state.db_components = components
+        self.app.state.db_components = components  # do gracefully dispose engine on shutdown application
         self.app.state.settings = self._settings
         self.app.dependency_overrides.update(
             {

@@ -6,10 +6,10 @@ __pycache__/
 # C extensions
 *.so
 test.*
-dev.py
+src/dev.py
 
 # test files
-./dev.py
+src/dev.py
 
 # Distribution / packaging
 .Python

@@ -14,5 +14,6 @@ director = Director(DevelopmentApplicationBuilder())
 app = director.configure()
 
 if __name__ == "__main__":
-    subprocess.run(["gunicorn", "-w 4", "-k uvicorn.workers.UvicornWorker", "main:app"])
+    director.run()
+    # subprocess.run(["gunicorn", "-w 4", "-k uvicorn.workers.UvicornWorker", "main:app"])
  

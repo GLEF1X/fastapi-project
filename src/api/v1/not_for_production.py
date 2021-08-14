@@ -29,7 +29,7 @@ async def get_product_by_id(
         product_id: int = Path(...),
         product_repository: ProductRepository = Depends(ProductRepositoryDependencyMarker),
 ) -> Union[JSONResponse, Product]:
-    product = await product_repository.get_product_by_id(product_id)
+    product: Product = await product_repository.get_product_by_id(product_id)
     return get_pydantic_model_or_return_raw_response(Product, product)
 
 
