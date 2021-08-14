@@ -16,9 +16,10 @@ class UserRepository(BaseRepository[User]):
     async def add_user(self, *, first_name: str, last_name: str,
                        phone_number: str, email: str, password: str, balance: typing.Union[Decimal, float, None] = None,
                        username: typing.Optional[str] = None) -> Model:
+        prepared_payload = filter_payload(locals())
         async with self._transaction:
             stmt = insert(self.model) \
-                .values(**filter_payload(locals())) \
+                .values(**prepared_payload) \
                 .on_conflict_do_nothing() \
                 .returning(self.model)
             result = (await self._session.execute(stmt)).first()

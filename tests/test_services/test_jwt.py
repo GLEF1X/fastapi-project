@@ -27,14 +27,12 @@ def test_creating_jwt_token() -> None:
         expires_delta=timedelta(minutes=1),
     )
     parsed_payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
     assert parsed_payload["content"] == "payload"
 
 
 def test_creating_token_for_user(test_user: User) -> None:
     token = create_access_token_for_user(user=test_user)
     parsed_payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
     assert parsed_payload["username"] == test_user.username
 
 

@@ -29,5 +29,5 @@ def wrap_result(result, cast_type=None):
 
 
 @typing.no_type_check
-def filter_payload(kwargs):
-    return {k: v for k, v in kwargs.items() if v is not None and v not in ['cls', 'self']}
+def filter_payload(payload):
+    return {k: v for k, v in payload.items() if k not in ['cls', 'self'] and v is not None}

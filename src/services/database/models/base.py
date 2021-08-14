@@ -10,12 +10,12 @@ from sqlalchemy.dialects.postgresql.asyncpg import (
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncConnection
 from sqlalchemy.future import Connection
-from sqlalchemy.orm import (
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.decl_api import (
     registry,
     DeclarativeMeta,
     declared_attr,
-    has_inherited_table,
-    sessionmaker,
+    has_inherited_table
 )
 from sqlalchemy.util import ImmutableProperties
 
@@ -61,24 +61,24 @@ class Base(metaclass=DeclarativeMeta):
 
 # noinspection PyUnusedLocal
 def before_execute_handler(
-    conn: Connection,
-    cursor: AsyncAdapt_asyncpg_cursor,
-    statement: str,
-    parameters: tuple,
-    context: PGExecutionContext_asyncpg,
-    executemany: bool,
+        conn: Connection,
+        cursor: AsyncAdapt_asyncpg_cursor,
+        statement: str,
+        parameters: tuple,
+        context: PGExecutionContext_asyncpg,
+        executemany: bool,
 ):
     conn.info.setdefault("query_start_time", []).append(time.monotonic())
 
 
 # noinspection PyUnusedLocal
 def after_execute(
-    conn: Connection,
-    cursor: AsyncAdapt_asyncpg_cursor,
-    statement: str,
-    parameters: tuple,
-    context: PGExecutionContext_asyncpg,
-    executemany: bool,
+        conn: Connection,
+        cursor: AsyncAdapt_asyncpg_cursor,
+        statement: str,
+        parameters: tuple,
+        context: PGExecutionContext_asyncpg,
+        executemany: bool,
 ):
     total = time.monotonic() - conn.info["query_start_time"].pop(-1)
     # sqlalchemy bug, executed twice `#4181` issue number
@@ -88,7 +88,7 @@ def after_execute(
 
 class DatabaseComponents:
     def __init__(
-        self, engine_kwargs: Optional[Dict[Any, Any]] = None, **kwargs
+            self, engine_kwargs: Optional[Dict[Any, Any]] = None, **kwargs
     ) -> None:
         self.__engine_kwargs = engine_kwargs or {}
         self.engine = create_async_engine(

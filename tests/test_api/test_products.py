@@ -16,7 +16,7 @@ from src.services.misc import Product
 pytestmark = pytest.mark.asyncio
 
 
-async def test_create_product(authorized_client: AsyncClient, app: FastAPI):
+async def test_create_product(authorized_client: AsyncClient, app: FastAPI) -> None:
     product = Product(name="blouse", unit_price=50.00, description="Pretty blouse", size=SizeEnum.SMALL)
     product.patch_enum_values()
     response = await authorized_client.put(app.url_path_for("products:create_product"), json=product.dict())
