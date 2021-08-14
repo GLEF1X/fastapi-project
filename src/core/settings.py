@@ -120,9 +120,9 @@ class RedisSettings(BaseSettings):
 
 
 class APIServicesSettings(BaseSettings):
-    QIWI_SECRET: str = Field(..., env="QIWI_SECRET")
-    QIWI_API_TOKEN: str = Field(..., env="QIWI_API_TOKEN")
-    PHONE_NUMBER: str = Field(..., env="PHONE_NUMBER")
+    QIWI_SECRET: Optional[str] = Field(None, env="QIWI_SECRET")
+    QIWI_API_TOKEN: Optional[str] = Field(None, env="QIWI_API_TOKEN")
+    PHONE_NUMBER: Optional[str] = Field(None, env="PHONE_NUMBER")
 
     class Config:
         env_file = ENV_PATH
@@ -140,6 +140,7 @@ class ApplicationSettings(BaseSettings):
     database: DatabaseSettings = DatabaseSettings()
     fastapi: FastAPISettings = FastAPISettings()  # noqa
     redis: RedisSettings = RedisSettings()
+    api: APIServicesSettings = APIServicesSettings()
     tests: TestSettings = TestSettings()
 
     class Config:
