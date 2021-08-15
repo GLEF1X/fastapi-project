@@ -9,6 +9,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from src.api import setup_routers
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker, ProductRepositoryDependencyMarker
+from src.api.v1.dependencies.security import JWTBasedAuthenticationImpl, AuthenticationProto
 from src.api.v1.errors.http_error import http_error_handler
 from src.api.v1.errors.validation_error import http422_error_handler
 from src.core.events import create_on_startup_handler, create_on_shutdown_handler
@@ -82,7 +83,8 @@ class DevelopmentApplicationBuilder(BaseApplicationBuilder):
         self.app.dependency_overrides.update(
             {
                 UserRepositoryDependencyMarker: lambda: UserRepository(components.sessionmaker),
-                ProductRepositoryDependencyMarker: lambda: ProductRepository(components.sessionmaker)
+                ProductRepositoryDependencyMarker: lambda: ProductRepository(components.sessionmaker),
+                AuthenticationProto: lambda: JWTBasedAuthenticationImpl()
             }
         )
 

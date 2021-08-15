@@ -2,13 +2,13 @@ from fastapi import Header, Depends, APIRouter
 from fastapi.responses import Response
 
 from src.api.v1.dependencies.database import ProductRepositoryDependencyMarker
-from src.api.v1.dependencies.security import get_current_user
+from src.api.v1.dependencies.security import AuthenticationProto
 from src.services.database.repositories.product import ProductRepository
 from src.services.misc import DefaultResponse
 from src.services.misc.schemas import Product
 from src.services.utils.endpoints_specs import ProductBodySpec
 
-api_router = APIRouter(dependencies=[Depends(get_current_user)])
+api_router = APIRouter(dependencies=[Depends(AuthenticationProto)])
 
 
 # noinspection PyUnusedLocal

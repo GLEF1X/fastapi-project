@@ -6,38 +6,46 @@
 
 from __future__ import annotations
 
-from fastapi import Depends, HTTPException
+import abc
+from typing import Dict, Any, Protocol
+
+from fastapi import HTTPException
 from jose import jwt, JWTError
-from pydantic import ValidationError
 from starlette import status
 
-from src.api.v1.dependencies.database import UserRepositoryDependencyMarker
-from src.services.database.repositories.user import UserRepository
-from src.services.misc import User, TokenData
-from src.services.utils.jwt import SECRET_KEY, ALGORITHM, oauth2_scheme
+from src.resources import api_string_templates
+from src.services.utils.jwt import SECRET_KEY, ALGORITHM
 
 
-async def get_current_user(  # TODO refactor this function(decomposition)
-        token: str = Depends(oauth2_scheme),
-        user_repository: UserRepository = Depends(UserRepositoryDependencyMarker),
-) -> User:
-    credentials_exception = HTTPException(
+class AuthenticationProto(Protocol):
+    validation_exception: HTTPException
+
+    @abc.abstractmethod
+    def decode_token(self, token: str) -> Dict[Any, Any]:
+        raise NotImplementedError
+
+    async def __call__(self, token: str) -> None: ...
+
+
+class JWTBasedAuthenticationImpl(AuthenticationProto):
+    validation_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail=api_string_templates.MALFORMED_PAYLOAD,
         headers={"WWW-Authenticate": "Bearer"},
     )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("username")
-        if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username)
-    except JWTError:
-        raise credentials_exception
-    try:
-        user = User.from_orm(await user_repository.get_user_by_username(token_data.username))
-        if user is None:
-            raise ValidationError
-    except ValidationError:
-        raise credentials_exception
-    return user
+
+    def decode_token(self, token: str) -> Dict[Any, Any]:
+        try:
+            return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        except JWTError:
+            raise self.validation_exception
+
+    def extract_user_name_from_decoded(self, decoded_data: Dict[Any, Any]) -> str:
+        try:
+            return decoded_data["username"]
+        except KeyError:
+            raise self.validation_exception
+
+    async def __call__(self, token: str) -> None:
+        payload = self.decode_token(token)
+        self.extract_user_name_from_decoded(payload)

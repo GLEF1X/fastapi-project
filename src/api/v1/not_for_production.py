@@ -11,25 +11,24 @@ from starlette import status
 from starlette.responses import JSONResponse
 
 from src.api.v1.dependencies.database import ProductRepositoryDependencyMarker
-from src.api.v1.dependencies.security import get_current_user
+from src.api.v1.dependencies.security import AuthenticationProto
+from src.services.database.models.product import Product as _DB_Product
 from src.services.database.repositories.product import ProductRepository
 from src.services.misc import Product
 from src.services.utils.responses import get_pydantic_model_or_return_raw_response
 
-api_router = APIRouter(dependencies=[Depends(get_current_user)])
+api_router = APIRouter(dependencies=[Depends(AuthenticationProto)])
 
 
 @api_router.get(
     "/products/get/{product_id}",
-    responses={
-        200: {"model": Product},
-    }
+    responses={200: {"model": Product}}
 )
 async def get_product_by_id(
         product_id: int = Path(...),
         product_repository: ProductRepository = Depends(ProductRepositoryDependencyMarker),
 ) -> Union[JSONResponse, Product]:
-    product: Product = await product_repository.get_product_by_id(product_id)
+    product: _DB_Product = await product_repository.get_product_by_id(product_id)
     return get_pydantic_model_or_return_raw_response(Product, product)
 
 
