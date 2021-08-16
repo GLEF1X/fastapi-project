@@ -1,36 +1,38 @@
+import logging
 from typing import Any, Optional, Dict, no_type_check
 
-import uvicorn
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from src.api import setup_routers
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker, ProductRepositoryDependencyMarker
-from src.api.v1.dependencies.security import JWTBasedAuthenticationImpl, AuthenticationProto
+from src.api.v1.dependencies.security import JWTBasedOAuth, AuthenticationDependencyMarker
 from src.api.v1.errors.http_error import http_error_handler
 from src.api.v1.errors.validation_error import http422_error_handler
+from src.core import ApplicationSettings
 from src.core.events import create_on_startup_handler, create_on_shutdown_handler
 from src.middlewares.process_time_middleware import add_process_time_header
 from src.services.database.models.base import DatabaseComponents
 from src.services.database.repositories.product import ProductRepository
 from src.services.database.repositories.user import UserRepository
-from src.services.utils.other.builder_base import BaseApplicationBuilder
+from src.services.utils.jwt import SECRET_KEY
+from src.services.utils.logging_ import CustomizeLogger
+from src.services.utils.other.builder_base import AbstractFastAPIApplicationBuilder
 from views import home
 from views.home import api_router
 
 ALLOWED_METHODS = ["POST", "PUT", "DELETE", "GET"]
 
 
-class DevelopmentApplicationBuilder(BaseApplicationBuilder):
+class DevelopmentApplicationBuilder(AbstractFastAPIApplicationBuilder):
     """Class, that provides the installation of FastAPI application"""
 
-    def __init__(self) -> None:
-        super(DevelopmentApplicationBuilder, self).__init__()
-        self.app = FastAPI(**self._settings.fastapi.api_kwargs)  # type: ignore
-        self.app.settings = self._settings  # type: ignore
+    def __init__(self, settings: ApplicationSettings) -> None:
+        super(DevelopmentApplicationBuilder, self).__init__(settings=settings)
 
         self._openapi_schema: Optional[Dict[str, Any]] = None
 
@@ -57,6 +59,7 @@ class DevelopmentApplicationBuilder(BaseApplicationBuilder):
             allow_headers=self._settings.fastapi.BACKEND_CORS_ORIGINS,
             expose_headers=["User-Agent", "Authorization"],
         )
+        self.app.add_middleware(middleware_class=SessionMiddleware, secret_key=SECRET_KEY)
 
     @no_type_check
     def configure_routes(self):
@@ -84,49 +87,79 @@ class DevelopmentApplicationBuilder(BaseApplicationBuilder):
             {
                 UserRepositoryDependencyMarker: lambda: UserRepository(components.sessionmaker),
                 ProductRepositoryDependencyMarker: lambda: ProductRepository(components.sessionmaker),
-                AuthenticationProto: lambda: JWTBasedAuthenticationImpl()
+                AuthenticationDependencyMarker: lambda: JWTBasedOAuth(UserRepository(components.sessionmaker))
             }
         )
 
-    def configure(self) -> None:
-        self.configure_routes()
-        self.setup_middlewares()
-        self.configure_application_state()
-        self.configure_templates()
-        self.configure_exception_handlers()
-        # We run `configure_events(...)` in the end of configure method, because we need to pass to on_shutdown and
-        # on_startup handlers configured application
-        self.configure_events()
+
+class DevelopmentApplicationBuilderLoggedProxy(AbstractFastAPIApplicationBuilder):
+
+    def __init__(self, settings: ApplicationSettings, logger: Optional[logging.Logger] = None) -> None:
+        super(DevelopmentApplicationBuilderLoggedProxy, self).__init__(settings)
+        self._underlying_builder = DevelopmentApplicationBuilder(settings=settings)
+        if logger is None:
+            self.app.state.logger = CustomizeLogger.make_logger(
+                config_path=settings.system_settings.LOGGING_CONFIG_PATH,
+                to_disable=["uvicorn.access", "uvicorn.asgi", "uvicorn.error"]
+            )
+        else:
+            self.app.state.logger = logger
+
+    def configure_openapi_schema(self) -> None:
+        self.app.state.logger.info("Configuring API schema")
+        self._underlying_builder.configure_openapi_schema()
+        self.app.state.logger.info("API schema configured successfully")
+
+    def setup_middlewares(self) -> None:
+        self.app.state.logger.info("Configuring middlewares")
+        self._underlying_builder.setup_middlewares()
+        self.app.state.logger.info("Middlewares configured successfully")
+
+    def configure_routes(self) -> None:
+        self.app.state.logger.info("Configuring routes")
+        self._underlying_builder.configure_routes()
+        self.app.state.logger.info("Routes configured successfully")
+
+    def configure_events(self) -> None:
+        self.app.state.logger.info("Configuring events")
+        self._underlying_builder.configure_events()
+        self.app.state.logger.info("Events configured successfully")
+
+    def configure_exception_handlers(self) -> None:
+        self.app.state.logger.info("Configuring exception handlers")
+        self._underlying_builder.configure_exception_handlers()
+        self.app.state.logger.info("Exception handlers configured successfully")
+
+    def configure_application_state(self) -> None:
+        self.app.state.logger.info("Configuring application state and DI")
+        self._underlying_builder.configure_application_state()
+        self.app.state.logger.info("Application state and DI configured successfully")
 
 
 class Director:
-    def __init__(self, builder: BaseApplicationBuilder) -> None:
-        if not isinstance(builder, BaseApplicationBuilder):
+    def __init__(self, builder: AbstractFastAPIApplicationBuilder) -> None:
+        if not isinstance(builder, AbstractFastAPIApplicationBuilder):
             raise TypeError("You passed on invalid builder")
         self._builder = builder
 
     @property
-    def builder(self) -> BaseApplicationBuilder:
+    def builder(self) -> AbstractFastAPIApplicationBuilder:
         return self._builder
 
     @builder.setter
-    def builder(self, new_builder: BaseApplicationBuilder):
+    def builder(self, new_builder: AbstractFastAPIApplicationBuilder):
         self._builder = new_builder
 
     def configure(self) -> FastAPI:
-        self._builder.configure()
+        self.builder.configure_routes()
+        self.builder.setup_middlewares()
+        self.builder.configure_application_state()
+        self.builder.configure_templates()
+        self.builder.configure_exception_handlers()
+        # We run `configure_events(...)` in the end of configure method, because we need to pass to on_shutdown and
+        # on_startup handlers configured application
+        self.builder.configure_events()
         return self.builder.app
 
-    def run(self, **kwargs) -> None:
-        """
-        !NOT FOR PRODUCTION! \n
-        Function, which start an application \n
-        Instead of it use gunicorn with uvicorn workers. e.g. \n
-        gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app
 
-        :return: None, just run application with uvicorn
-        """
-        uvicorn.run(self._builder.app, **kwargs)  # type: ignore  # noqa
-
-
-__all__ = ("Director", "DevelopmentApplicationBuilder")
+__all__ = ("Director", "DevelopmentApplicationBuilder", "DevelopmentApplicationBuilderLoggedProxy")

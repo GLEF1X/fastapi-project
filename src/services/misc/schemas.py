@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 from email_validator import validate_email
 from pydantic import BaseModel, Field, validator
@@ -83,3 +83,4 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: str
+    scopes: List[str] = []

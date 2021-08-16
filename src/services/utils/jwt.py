@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import Final, Dict, Any, Optional, cast
+from typing import Final, Dict, Any, Optional, cast, List
 
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
@@ -19,7 +19,8 @@ from src.services.database.repositories.user import UserRepository
 from src.services.misc import TokenData
 from src.services.utils.exceptions import UserIsNotAuthenticated
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/oauth")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/oauth", scopes={"me": "Read information about the current user.",
+                                                                       "items": "Read items."}, )
 SECRET_KEY: Final[
     str
 ] = "d9721f6c989b5165f273e6c78bdbc67b169097095023118bd7709ec2b613868c"
@@ -46,9 +47,11 @@ def create_jwt_token(*, jwt_content: Dict[Any, Any], expires_delta: Optional[dat
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_access_token_for_user(user: _DB_User) -> str:
+def create_access_token_for_user(user: _DB_User, scopes: Optional[List[str]] = None) -> str:
+    if scopes is None:
+        scopes = []
     return create_jwt_token(
-        jwt_content=TokenData(username=user.username).dict(),
+        jwt_content=TokenData(username=user.username, scopes=scopes).dict(exclude_unset=True),
         expires_delta=datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
@@ -60,10 +63,18 @@ async def authenticate_user(username: str, password: str, user_repository: UserR
     return user
 
 
-def get_username_from_token(token: str, secret_key: str) -> str:
+def get_token_data_from_token(token: str, secret_key: str) -> TokenData:
     try:
-        return TokenData(**jwt.decode(token, secret_key, algorithms=[ALGORITHM])).username
+        return TokenData(**jwt.decode(token, secret_key, algorithms=[ALGORITHM]))
     except jwt.JWTError as decode_error:
         raise ValueError("unable to decode JWT token") from decode_error
     except ValidationError as validation_error:
         raise ValueError("malformed payload in token") from validation_error
+
+
+def get_username_from_token(token: str, secret_key: str) -> str:
+    return get_token_data_from_token(token, secret_key).username
+
+
+def get_security_scopes_from_token(token: str, secret_key: str) -> List[str]:
+    return get_token_data_from_token(token, secret_key).scopes

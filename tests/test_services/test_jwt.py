@@ -17,7 +17,8 @@ from src.services.utils.jwt import (
     create_access_token_for_user,
     create_jwt_token,
     get_username_from_token,
-    SECRET_KEY
+    SECRET_KEY,
+    get_security_scopes_from_token
 )
 
 
@@ -36,10 +37,24 @@ def test_creating_token_for_user(test_user: User) -> None:
     assert parsed_payload["username"] == test_user.username
 
 
+def test_creating_token_for_user_with_scopes(test_user: User) -> None:
+    scopes = ["me", "some_another"]
+    token = create_access_token_for_user(user=test_user, scopes=scopes)
+    parsed_payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    assert parsed_payload["scopes"] == scopes
+
+
 def test_retrieving_token_from_user(test_user: User) -> None:
     token = create_access_token_for_user(user=test_user)
     username = get_username_from_token(token, SECRET_KEY)
     assert username == test_user.username
+
+
+def test_retrieving_scopes_from_user(test_user: User) -> None:
+    scopes = ["me", "some_another"]
+    token = create_access_token_for_user(user=test_user, scopes=scopes)
+    scopes_from_decoded = get_security_scopes_from_token(token, SECRET_KEY)
+    assert scopes == scopes_from_decoded
 
 
 def test_error_when_wrong_token() -> None:

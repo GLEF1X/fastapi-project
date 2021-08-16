@@ -10,6 +10,7 @@ src/dev.py
 
 # test files
 src/dev.py
+logs
 
 # Distribution / packaging
 .Python

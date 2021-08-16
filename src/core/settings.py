@@ -136,12 +136,18 @@ class TestSettings(BaseSettings):
     USERS_OPEN_REGISTRATION: bool = False
 
 
+class SystemSettings(BaseSettings):
+    BASE_DIR: pathlib.Path = pathlib.Path(__name__).parent.parent
+    LOGGING_CONFIG_PATH: pathlib.Path = BASE_DIR / "logging_config.json"
+
+
 class ApplicationSettings(BaseSettings):
     database: DatabaseSettings = DatabaseSettings()
     fastapi: FastAPISettings = FastAPISettings()  # noqa
     redis: RedisSettings = RedisSettings()
     api: APIServicesSettings = APIServicesSettings()
     tests: TestSettings = TestSettings()
+    system_settings: SystemSettings = SystemSettings()
 
     class Config:
         env_file = ENV_PATH
