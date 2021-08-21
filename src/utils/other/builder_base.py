@@ -8,11 +8,10 @@ from src.core.settings import TEMPLATES_DIR
 
 
 class AbstractFastAPIApplicationBuilder(metaclass=abc.ABCMeta):
+    app: FastAPI
 
     def __init__(self, settings: ApplicationSettings) -> None:
         self._settings = settings
-        self.app: FastAPI = FastAPI(**self._settings.fastapi.api_kwargs)  # type: ignore
-        self.app.settings = self._settings  # type: ignore
 
     @abc.abstractmethod
     def configure_openapi_schema(self) -> None:

@@ -6,7 +6,7 @@ from src.api.v1.dependencies.security import AuthenticationDependencyMarker
 from src.services.database.repositories.product import ProductRepository
 from src.services.misc import DefaultResponse
 from src.services.misc.schemas import Product
-from src.services.utils.endpoints_specs import ProductBodySpec
+from src.utils.endpoints_specs import ProductBodySpec
 
 api_router = APIRouter(dependencies=[Depends(AuthenticationDependencyMarker)])
 

@@ -12,7 +12,6 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql import Executable
 
 from src.services.database.models.base import ASTERISK
-from src.services.database.utils import filter_payload
 
 Model = typing.TypeVar("Model")
 TransactionContext = typing.AsyncContextManager[AsyncSessionTransaction]
@@ -24,7 +23,7 @@ class BaseRepository(ABC, typing.Generic[Model]):
     so that they do not creep into inherited classes
     """
 
-    # You need to define this variable in child classes
+    # You have to define this variable in child classes
     model: typing.ClassVar[typing.Type[Model]]
 
     def __init__(self, session_or_pool: typing.Union[sessionmaker, AsyncSession]) -> None:
@@ -60,12 +59,12 @@ class BaseRepository(ABC, typing.Generic[Model]):
         async with self._transaction:
             insert_stmt = (
                 insert(self.model)
-                    .values(**filter_payload(values))
+                    .values(**values)
                     .on_conflict_do_nothing()
                     .returning(self.model)
             )
             result = (await self._session.execute(insert_stmt)).mappings().first()
-        return self._convert_to_model(**typing.cast(typing.Dict[str, typing.Any], result))
+        return self._convert_to_model(typing.cast(typing.Dict[str, typing.Any], result))
 
     async def _select_all(self, *clauses: typing.Any) -> typing.List[Model]:
         """
@@ -127,13 +126,13 @@ class BaseRepository(ABC, typing.Generic[Model]):
     async def _delete(self, *clauses: typing.Any) -> typing.List[Model]:
         async with self._transaction:
             stmt = delete(self.model).where(*clauses).returning(ASTERISK)
-            result = (await self._session.execute(stmt)).scalars().all()
-        return typing.cast(typing.List[Model], result)
+            result = (await self._session.execute(stmt)).mappings().all()
+        return list(map(self._convert_to_model, result))
 
     async def _count(self) -> int:
         async with self._transaction:
             count = (await self._session.execute(func.count(ASTERISK))).scalars().first()
         return cast(int, count)
 
-    def _convert_to_model(self, **kwargs) -> Model:
+    def _convert_to_model(self, kwargs) -> Model:
         return self.model(**kwargs)  # type: ignore

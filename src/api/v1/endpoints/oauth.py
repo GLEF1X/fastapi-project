@@ -12,8 +12,8 @@ from starlette.responses import RedirectResponse, HTMLResponse
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker
 from src.core import BASE_DIR
 from src.services.database.repositories.user import UserRepository
-from src.services.utils.exceptions import UserIsNotAuthenticated
-from src.services.utils.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token, authenticate_user
+from src.utils.exceptions import UserIsNotAuthenticated
+from src.utils.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token, authenticate_user
 
 oauth = OAuth(Config(str(BASE_DIR / ".env")))
 oauth.register(

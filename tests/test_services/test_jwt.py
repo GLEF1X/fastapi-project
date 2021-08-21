@@ -12,7 +12,7 @@ import pytest
 from jose import jwt
 
 from src.services.database import User
-from src.services.utils.jwt import (
+from src.utils.jwt import (
     ALGORITHM,
     create_access_token_for_user,
     create_jwt_token,

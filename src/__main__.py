@@ -8,7 +8,7 @@ from typing import Any
 import uvicorn
 
 from src.core import ApplicationSettings
-from src.services.utils.other.api_installation import (
+from src.utils.other import (
     Director,
     DevelopmentApplicationBuilderLoggedProxy,
 )
@@ -25,10 +25,10 @@ def run_application(**kwargs: Any) -> None:
     """
     settings = ApplicationSettings()
     director = Director(DevelopmentApplicationBuilderLoggedProxy(settings=settings))
-    app = director.configure()
+    app = director.build_app()
     uvicorn.run(app, **kwargs)  # type: ignore  # noqa
 
 
 if __name__ == "__main__":
-    run_application()
+    run_application(host="0.0.0.0", port=8080)
     # subprocess.run(["gunicorn", "-w 4", "-k uvicorn.workers.UvicornWorker", "main:app"])

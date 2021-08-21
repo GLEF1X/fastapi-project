@@ -19,9 +19,9 @@ from src.middlewares.process_time_middleware import add_process_time_header
 from src.services.database.models.base import DatabaseComponents
 from src.services.database.repositories.product import ProductRepository
 from src.services.database.repositories.user import UserRepository
-from src.services.utils.jwt import SECRET_KEY
-from src.services.utils.logging_ import CustomizeLogger
-from src.services.utils.other.builder_base import AbstractFastAPIApplicationBuilder
+from src.utils.jwt import SECRET_KEY
+from src.utils.logging_ import CustomizeLogger
+from src.utils.other.builder_base import AbstractFastAPIApplicationBuilder
 from views import home
 from views.home import api_router
 
@@ -33,7 +33,8 @@ class DevelopmentApplicationBuilder(AbstractFastAPIApplicationBuilder):
 
     def __init__(self, settings: ApplicationSettings) -> None:
         super(DevelopmentApplicationBuilder, self).__init__(settings=settings)
-
+        self.app: FastAPI = FastAPI(**self._settings.fastapi.api_kwargs)  # type: ignore
+        self.app.settings = self._settings  # type: ignore
         self._openapi_schema: Optional[Dict[str, Any]] = None
 
     def configure_openapi_schema(self) -> None:
@@ -97,6 +98,7 @@ class DevelopmentApplicationBuilderLoggedProxy(AbstractFastAPIApplicationBuilder
     def __init__(self, settings: ApplicationSettings, logger: Optional[logging.Logger] = None) -> None:
         super(DevelopmentApplicationBuilderLoggedProxy, self).__init__(settings)
         self._underlying_builder = DevelopmentApplicationBuilder(settings=settings)
+        self.app = self._underlying_builder.app
         if logger is None:
             self.app.state.logger = CustomizeLogger.make_logger(
                 config_path=settings.system_settings.LOGGING_CONFIG_PATH,
@@ -150,7 +152,7 @@ class Director:
     def builder(self, new_builder: AbstractFastAPIApplicationBuilder):
         self._builder = new_builder
 
-    def configure(self) -> FastAPI:
+    def build_app(self) -> FastAPI:
         self.builder.configure_routes()
         self.builder.setup_middlewares()
         self.builder.configure_application_state()

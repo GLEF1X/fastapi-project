@@ -17,8 +17,8 @@ from src.services.database import User, Product
 from src.services.database.models import SizeEnum
 from src.services.database.repositories.product import ProductRepository
 from src.services.database.repositories.user import UserRepository
-from src.services.utils import jwt
-from src.services.utils.other.api_installation import DevelopmentApplicationBuilder, Director
+from src.utils import jwt
+from src.utils.other.api_installation import DevelopmentApplicationBuilder, Director
 
 
 @pytest.fixture(scope="module")
@@ -51,8 +51,9 @@ async def apply_migrations(path_to_alembic_ini: str, path_to_migrations_folder: 
 
 @pytest.fixture(scope="module")
 def app(apply_migrations: None) -> FastAPI:
-    director = Director(DevelopmentApplicationBuilder())
-    return director.configure()
+    settings = ApplicationSettings()
+    director = Director(DevelopmentApplicationBuilder(settings=settings))
+    return director.build_app()
 
 
 @pytest.fixture(scope="module")

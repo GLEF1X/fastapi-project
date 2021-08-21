@@ -1,0 +1,64 @@
+version: "3.9"
+
+
+services:
+  fastapi:
+    container_name: fastapi-backend
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+      target: development
+      args:
+        INSTALL_DEV: ${INSTALL_DEV:-false}
+    restart: always
+    depends_on:
+      - pg_database
+    networks:
+      - backend
+    command:
+      /bin/sh -c "alembic upgrade head && python -m src"
+    ports:
+      - "80:8080"
+    env_file:
+      - ../.env
+
+  pgadmin:
+    image: dpage/pgadmin4
+    depends_on:
+      - pg_database
+    container_name: pgadmin-client
+    env_file: ../.env
+    restart: always
+    ports:
+      - "5050:80"
+
+  pg_database:
+    container_name: ${DB_CONTAINER_NAME:-postgres}
+    image: postgres:13-alpine
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file:
+      - ../.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+    expose:
+      - 5432
+
+volumes:
+  pgdata:
+    name: postgres-data
+
+networks:
+  backend:
+    driver: bridge

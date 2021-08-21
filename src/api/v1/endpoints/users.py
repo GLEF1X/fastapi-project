@@ -11,8 +11,8 @@ from src.services.database.exceptions import UnableToDelete
 from src.services.database.repositories.user import UserRepository
 from src.services.misc import User, DefaultResponse
 from src.services.misc.schemas import ObjectCount, SimpleResponse
-from src.services.utils.endpoints_specs import UserBodySpec
-from src.services.utils.responses import NotFoundJsonResponse, BadRequestJsonResponse
+from src.utils.endpoints_specs import UserBodySpec
+from src.utils.responses import NotFoundJsonResponse, BadRequestJsonResponse
 
 api_router = APIRouter(dependencies=[Depends(AuthenticationDependencyMarker)])
 

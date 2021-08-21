@@ -18,7 +18,7 @@ class HashedPassword(types.TypeDecorator):
 
     @no_type_check
     def process_bind_param(self, value, dialect):
-        from src.services.utils.jwt import get_password_hash  # to avoid Circular import error
+        from src.utils.jwt import get_password_hash  # to avoid Circular import error
 
         return get_password_hash(value)
 

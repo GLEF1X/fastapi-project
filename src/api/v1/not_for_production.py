@@ -15,7 +15,7 @@ from src.api.v1.dependencies.security import AuthenticationDependencyMarker
 from src.services.database.models.product import Product as _DB_Product
 from src.services.database.repositories.product import ProductRepository
 from src.services.misc import Product
-from src.services.utils.responses import get_pydantic_model_or_return_raw_response
+from src.utils.responses import get_pydantic_model_or_return_raw_response
 
 api_router = APIRouter(dependencies=[Depends(AuthenticationDependencyMarker)])
 

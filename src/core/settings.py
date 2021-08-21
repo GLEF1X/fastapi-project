@@ -19,10 +19,10 @@ def get_settings() -> ApplicationSettings:
 
 
 class DatabaseSettings(BaseSettings):
-    USER: str = Field(..., env="DB_USER")
-    PASS: str = Field(..., env="DB_PASS")
-    HOST: Union[str, AnyHttpUrl] = Field(..., env="DB_HOST")
-    NAME: str = Field(..., env="DB_NAME")
+    USER: str = Field(..., env="POSTGRES_USER")
+    PASS: str = Field(..., env="POSTGRES_PASSWORD")
+    HOST: Union[str, AnyHttpUrl] = Field(..., env="POSTGRES_HOST")
+    NAME: str = Field(..., env="POSTGRES_DB")
     # Here is type str instead of PostgresDsn, because PostgresDsn does not support asyncpg+postgresql connection
     CONNECTION_URL: Optional[str] = None
 

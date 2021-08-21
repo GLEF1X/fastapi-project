@@ -1,13 +1,12 @@
 import typing
 from decimal import Decimal
 
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 
 from src.services.database import UnableToDelete
 from src.services.database.models import User
 from src.services.database.repositories.base import BaseRepository, Model
-from src.services.database.utils import wrap_result, filter_payload
+from src.utils.database_utils import wrap_result, filter_payload
 
 
 class UserRepository(BaseRepository[User]):
@@ -17,13 +16,7 @@ class UserRepository(BaseRepository[User]):
                        phone_number: str, email: str, password: str, balance: typing.Union[Decimal, float, None] = None,
                        username: typing.Optional[str] = None) -> Model:
         prepared_payload = filter_payload(locals())
-        async with self._transaction:
-            stmt = insert(self.model) \
-                .values(**prepared_payload) \
-                .on_conflict_do_nothing() \
-                .returning(self.model)
-            result = (await self._session.execute(stmt)).first()
-        return typing.cast(Model, result)
+        return wrap_result(await self._insert(**prepared_payload))
 
     async def delete_user(self, user_id: int) -> None:
         try:

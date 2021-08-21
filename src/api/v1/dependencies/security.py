@@ -18,7 +18,7 @@ from src.resources import api_string_templates
 from src.services.database.models.user import User
 from src.services.database.repositories.user import UserRepository
 from src.services.misc import TokenData
-from src.services.utils.jwt import SECRET_KEY, ALGORITHM
+from src.utils.jwt import SECRET_KEY, ALGORITHM
 
 
 class AuthenticationDependencyMarker:  # pragma: no cover

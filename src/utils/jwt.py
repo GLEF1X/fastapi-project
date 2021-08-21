@@ -7,17 +7,19 @@
 from __future__ import annotations
 
 import datetime
-from typing import Final, Dict, Any, Optional, cast, List
+from typing import Final, Dict, Any, Optional, cast, List, TYPE_CHECKING
 
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from passlib.context import CryptContext
 from pydantic import ValidationError
 
-from src.services.database import User as _DB_User
-from src.services.database.repositories.user import UserRepository
+from src.services.database.models.user import User as _DB_User
 from src.services.misc import TokenData
-from src.services.utils.exceptions import UserIsNotAuthenticated
+from src.utils.exceptions import UserIsNotAuthenticated
+
+if TYPE_CHECKING:
+    from src.services.database.repositories.user import UserRepository
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/oauth", scopes={"me": "Read information about the current user.",
                                                                        "items": "Read items."}, )
@@ -56,7 +58,7 @@ def create_access_token_for_user(user: _DB_User, scopes: Optional[List[str]] = N
     )
 
 
-async def authenticate_user(username: str, password: str, user_repository: UserRepository) -> _DB_User:
+async def authenticate_user(username: str, password: str, user_repository: "UserRepository") -> _DB_User:
     user: _DB_User = await user_repository.get_user_by_username(username)
     if not user or not verify_password(password, cast(str, user.password)):
         raise UserIsNotAuthenticated()
