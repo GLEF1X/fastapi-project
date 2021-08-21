@@ -9,7 +9,7 @@ from pydantic import BaseSettings, Field, AnyHttpUrl, PostgresDsn, validator, Em
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 ENV_PATH = str(BASE_DIR / ".env")
-TEMPLATES_DIR = str(BASE_DIR / "templates")
+TEMPLATES_DIR = str(BASE_DIR / "src" / "templates")
 T = TypeVar("T")
 
 

@@ -22,8 +22,7 @@ from src.services.database.repositories.user import UserRepository
 from src.utils.jwt import SECRET_KEY
 from src.utils.logging_ import CustomizeLogger
 from src.utils.other.builder_base import AbstractFastAPIApplicationBuilder
-from views import home
-from views.home import api_router
+from src.views import setup_routes
 
 ALLOWED_METHODS = ["POST", "PUT", "DELETE", "GET"]
 
@@ -64,8 +63,7 @@ class DevelopmentApplicationBuilder(AbstractFastAPIApplicationBuilder):
 
     @no_type_check
     def configure_routes(self):
-        self.app.include_router(home.api_router, include_in_schema=False)
-        self.app.include_router(api_router)
+        setup_routes(self.app)
         self.app.include_router(setup_routers())
 
     def configure_events(self) -> None:

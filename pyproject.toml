@@ -14,7 +14,7 @@ Jinja2 = "^3.0.1"
 PyYAML = "^5.4.1"
 python-multipart = "^0.0.5"
 graphene = "^2.1.9"
-glqiwiapi = { git = "https://github.com/GLEF1X/glQiwiApi", branch = "iso-convert-date-hotfix"}
+glqiwiapi = { git = "https://github.com/GLEF1X/glQiwiApi", branch = "dev-1.x"}
 asyncpg = "^0.24.0"
 loguru = "^0.5.3"
 environs = "^9.3.2"

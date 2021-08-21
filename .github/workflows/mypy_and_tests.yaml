@@ -72,10 +72,10 @@ jobs:
         run: |
           poetry run pytest .
         env:
-          DB_USER: postgres
-          DB_NAME: postgres
-          DB_HOST: localhost
-          DB_PASS: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST: localhost
+          POSTGRES_PASSWORD: postgres
           # FastAPI config
           APP_NAME: FastAPI
           API_VERSION: 0.0.1
