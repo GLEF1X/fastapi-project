@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi
+  labels:
+    app: backend-fastapi
+spec:
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - fastapi
+      - key: framework
+        operator: In
+        values:
+          - fastapi
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: fastapi
+        framework: fastapi
+    spec:
+      containers:
+        - name: fastapi-backend
+          image: 90956565/fastapi-test-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: 'TCP'
+          envFrom:
+            - secretRef:
+                name: fastapi-secret
+            - configMapRef:
+                name: fastapi-config
+            - secretRef:
+                name: postgresql-secret
+          env:
+            - name: POSTGRES_HOST
+              value: 'postgresql-service.default'
+          command: [ "sh", "-c", "alembic upgrade head && python -m src" ]
+

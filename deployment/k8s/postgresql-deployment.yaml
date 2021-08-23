@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql-database
+  labels:
+    app: database
+spec:
+  selector:
+    matchExpressions:
+      - key: spec
+        operator: In
+        values: [ database, postgres, postgresql ]
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        spec: database
+    spec:
+      containers:
+        - name: postgresql-db
+          image: postgres:12-alpine
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: postgresql-secret
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data/pgdata
+              name: postgres-volume
+      volumes:
+        - name: postgres-volume
+          persistentVolumeClaim:
+            claimName: postgres-pvc

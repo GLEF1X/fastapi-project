@@ -104,6 +104,7 @@ class DevelopmentApplicationBuilderLoggedProxy(AbstractFastAPIApplicationBuilder
             )
         else:
             self.app.state.logger = logger
+        self.app.state.logger.info(settings.json())
 
     def configure_openapi_schema(self) -> None:
         self.app.state.logger.info("Configuring API schema")
