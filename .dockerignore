@@ -4,3 +4,4 @@ __pycache__
 tests
 .pytest_cache
 .mypy_cache
+.env

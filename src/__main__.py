@@ -8,7 +8,8 @@ from typing import Any
 import uvicorn
 
 from src.core import ApplicationSettings
-from src.utils.other.api_installation import DevelopmentApplicationBuilderLoggedProxy, Director
+from src.utils.other.api_installation import \
+    DevelopmentApplicationBuilderLoggedProxy, Director
 
 
 def run_application(**kwargs: Any) -> None:

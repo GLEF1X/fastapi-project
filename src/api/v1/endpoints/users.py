@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker
-from src.api.v1.dependencies.security import AuthenticationDependencyMarker
+from src.api.v1.dependencies.security import auth_dependency_marker
 from src.resources import api_string_templates
 from src.services.database.exceptions import UnableToDelete
 from src.services.database.repositories.user import UserRepository
@@ -14,7 +14,7 @@ from src.services.misc.schemas import ObjectCount, SimpleResponse
 from src.utils.endpoints_specs import UserBodySpec
 from src.utils.responses import NotFoundJsonResponse, BadRequestJsonResponse
 
-api_router = APIRouter(dependencies=[Depends(AuthenticationDependencyMarker)])
+api_router = APIRouter(dependencies=[Depends(auth_dependency_marker)])
 
 
 # noinspection PyUnusedLocal

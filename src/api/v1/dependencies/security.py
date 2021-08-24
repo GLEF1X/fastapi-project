@@ -1,16 +1,8 @@
-#  Copyright (c) 2021. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-#  Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan.
-#  Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
-#  Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
-#  Vestibulum commodo. Ut rhoncus gravida arcu.
-
-from __future__ import annotations
-
 from typing import Dict, Any
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from fastapi.security import SecurityScopes
-from jose import jwt, JWTError
+from jose import jwt, JWTError  # noqa
 from pydantic import ValidationError
 from starlette import status
 
@@ -18,10 +10,11 @@ from src.resources import api_string_templates
 from src.services.database.models.user import User
 from src.services.database.repositories.user import UserRepository
 from src.services.misc import TokenData
-from src.utils.jwt import SECRET_KEY, ALGORITHM
+from src.utils.jwt import SECRET_KEY, ALGORITHM, oauth2_scheme
 
 
-class AuthenticationDependencyMarker:  # pragma: no cover
+def auth_dependency_marker(token: str = Depends(oauth2_scheme)) -> None:
+    """Replacing func to callable class `JWTBasedOAuth` using "marker" to override dependency"""
     pass
 
 
@@ -59,7 +52,8 @@ class JWTBasedOAuth:
 
     def extract_token_data_from_decoded(self, decoded_data: Dict[Any, Any]) -> TokenData:
         try:
-            return TokenData(username=decoded_data["username"], scopes=decoded_data.get("scopes", []))
+            return TokenData(username=decoded_data["username"],
+                             scopes=decoded_data.get("scopes", []))
         except (KeyError, ValidationError):
             raise self.validation_exception
 
@@ -73,5 +67,6 @@ class JWTBasedOAuth:
         prefix = _retrieve_authorization_prefix(security_scopes)
         payload = self.decode_token(token)
         token_data = self.extract_token_data_from_decoded(payload)
-        _check_security_scopes(security_scopes=security_scopes, token_data=token_data, prefix=prefix)
+        _check_security_scopes(security_scopes=security_scopes, token_data=token_data,
+                               prefix=prefix)
         return await self.retrieve_user_or_raise_exception(token_data=token_data)

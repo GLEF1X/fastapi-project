@@ -21,8 +21,11 @@ from src.utils.exceptions import UserIsNotAuthenticated
 if TYPE_CHECKING:
     from src.services.database.repositories.user import UserRepository
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/oauth", scopes={"me": "Read information about the current user.",
-                                                                       "items": "Read items."}, )
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/api/v1/oauth",
+    scopes={"me": "Read information about the current user.",
+            "items": "Read items."},
+)
 SECRET_KEY: Final[
     str
 ] = "d9721f6c989b5165f273e6c78bdbc67b169097095023118bd7709ec2b613868c"
@@ -39,7 +42,8 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_jwt_token(*, jwt_content: Dict[Any, Any], expires_delta: Optional[datetime.timedelta] = None) -> str:
+def create_jwt_token(*, jwt_content: Dict[Any, Any],
+                     expires_delta: Optional[datetime.timedelta] = None) -> str:
     to_encode = jwt_content.copy()
     if expires_delta is not None:
         expire = datetime.datetime.utcnow() + expires_delta
@@ -58,7 +62,8 @@ def create_access_token_for_user(user: _DB_User, scopes: Optional[List[str]] = N
     )
 
 
-async def authenticate_user(username: str, password: str, user_repository: "UserRepository") -> _DB_User:
+async def authenticate_user(username: str, password: str,
+                            user_repository: "UserRepository") -> _DB_User:
     user: _DB_User = await user_repository.get_user_by_username(username)
     if not user or not verify_password(password, cast(str, user.password)):
         raise UserIsNotAuthenticated()
