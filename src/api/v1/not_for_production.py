@@ -11,13 +11,13 @@ from starlette import status
 from starlette.responses import JSONResponse
 
 from src.api.v1.dependencies.database import ProductRepositoryDependencyMarker
-from src.api.v1.dependencies.security import auth_dependency_marker
+from src.api.v1.dependencies.security import JWTBasedOAuth
 from src.services.database.models.product import Product as _DB_Product
 from src.services.database.repositories.product import ProductRepository
 from src.services.misc import Product
 from src.utils.responses import get_pydantic_model_or_return_raw_response
 
-api_router = APIRouter(dependencies=[Depends(auth_dependency_marker)])
+api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth)])
 
 
 @api_router.get(

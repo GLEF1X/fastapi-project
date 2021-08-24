@@ -10,7 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from src.api import setup_routers
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker, ProductRepositoryDependencyMarker
-from src.api.v1.dependencies.security import JWTBasedOAuth, auth_dependency_marker
+from src.api.v1.dependencies.security import JWTBasedOAuth, JWTBasedOAuth
 from src.api.v1.errors.http_error import http_error_handler
 from src.api.v1.errors.validation_error import http422_error_handler
 from src.core import ApplicationSettings
@@ -80,13 +80,13 @@ class DevelopmentApplicationBuilder(AbstractFastAPIApplicationBuilder):
                                         password=self._settings.database.PASS,
                                         host=self._settings.database.HOST,
                                         database=self._settings.database.NAME)
-        self.app.state.db_components = components  # do gracefully dispose engine on shutdown application
+        # do gracefully dispose engine on shutdown application
+        self.app.state.db_components = components
         self.app.state.settings = self._settings
         self.app.dependency_overrides.update(
             {
                 UserRepositoryDependencyMarker: lambda: UserRepository(components.sessionmaker),
-                ProductRepositoryDependencyMarker: lambda: ProductRepository(components.sessionmaker),
-                auth_dependency_marker: JWTBasedOAuth(UserRepository(components.sessionmaker))
+                ProductRepositoryDependencyMarker: lambda: ProductRepository(components.sessionmaker)
             }
         )
 

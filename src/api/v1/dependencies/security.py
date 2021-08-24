@@ -6,16 +6,12 @@ from jose import jwt, JWTError  # noqa
 from pydantic import ValidationError
 from starlette import status
 
+from src.api.v1.dependencies.database import UserRepositoryDependencyMarker
 from src.resources import api_string_templates
 from src.services.database.models.user import User
 from src.services.database.repositories.user import UserRepository
 from src.services.misc import TokenData
 from src.utils.jwt import SECRET_KEY, ALGORITHM, oauth2_scheme
-
-
-def auth_dependency_marker(token: str = Depends(oauth2_scheme)) -> None:
-    """Replacing func to callable class `JWTBasedOAuth` using "marker" to override dependency"""
-    pass
 
 
 def _retrieve_authorization_prefix(security_scopes: SecurityScopes) -> str:
@@ -41,9 +37,6 @@ class JWTBasedOAuth:
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    def __init__(self, user_repository: UserRepository) -> None:
-        self._user_repository = user_repository
-
     def decode_token(self, token: str) -> Dict[Any, Any]:
         try:
             return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -57,16 +50,20 @@ class JWTBasedOAuth:
         except (KeyError, ValidationError):
             raise self.validation_exception
 
-    async def retrieve_user_or_raise_exception(self, token_data: TokenData) -> User:
-        user: User = await self._user_repository.get_user_by_username(username=token_data.username)
+    async def retrieve_user_or_raise_exception(self, token_data: TokenData,
+                                               user_repo: UserRepository) -> User:
+        user: User = await user_repo.get_user_by_username(username=token_data.username)
         if user is None:
             raise self.validation_exception
         return user
 
-    async def __call__(self, token: str, security_scopes: SecurityScopes) -> User:
+    async def __call__(self, security_scopes: SecurityScopes,
+                       token: str = Depends(oauth2_scheme),
+                       user_repository: UserRepository = Depends(UserRepositoryDependencyMarker)
+                       ) -> User:
         prefix = _retrieve_authorization_prefix(security_scopes)
         payload = self.decode_token(token)
         token_data = self.extract_token_data_from_decoded(payload)
         _check_security_scopes(security_scopes=security_scopes, token_data=token_data,
                                prefix=prefix)
-        return await self.retrieve_user_or_raise_exception(token_data=token_data)
+        return await self.retrieve_user_or_raise_exception(token_data, user_repository)

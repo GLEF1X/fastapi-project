@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker
-from src.api.v1.dependencies.security import auth_dependency_marker
+from src.api.v1.dependencies.security import JWTBasedOAuth
 from src.resources import api_string_templates
 from src.services.database.exceptions import UnableToDelete
 from src.services.database.repositories.user import UserRepository
@@ -14,11 +14,12 @@ from src.services.misc.schemas import ObjectCount, SimpleResponse
 from src.utils.endpoints_specs import UserBodySpec
 from src.utils.responses import NotFoundJsonResponse, BadRequestJsonResponse
 
-api_router = APIRouter(dependencies=[Depends(auth_dependency_marker)])
+api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth)])
 
 
 # noinspection PyUnusedLocal
-@api_router.get("/users/{user_id}/info", response_model=User, tags=["Users"], name="users:get_user_info")
+@api_router.get("/users/{user_id}/info", response_model=User, tags=["Users"],
+                name="users:get_user_info")
 async def get_user_info(
         user_id: int,
         user_repository: UserRepository = Depends(UserRepositoryDependencyMarker)

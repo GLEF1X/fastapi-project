@@ -2,13 +2,13 @@ from fastapi import Header, Depends, APIRouter
 from fastapi.responses import Response
 
 from src.api.v1.dependencies.database import ProductRepositoryDependencyMarker
-from src.api.v1.dependencies.security import auth_dependency_marker
+from src.api.v1.dependencies.security import JWTBasedOAuth
 from src.services.database.repositories.product import ProductRepository
 from src.services.misc import DefaultResponse
 from src.services.misc.schemas import Product
 from src.utils.endpoints_specs import ProductBodySpec
 
-api_router = APIRouter(dependencies=[Depends(auth_dependency_marker)])
+api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth)])
 
 
 # noinspection PyUnusedLocal
