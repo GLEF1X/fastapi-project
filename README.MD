@@ -2,6 +2,14 @@
 
 ![test_workflow](https://github.com/GLEF1X/fastapi-project/actions/workflows/mypy_and_tests.yaml/badge.svg)
 
+### What has already been done?🧭
+
+- Deployment using Docker and docker-compose
+- Deployment using kubernetes(with backups by cron, volumes for database)
+- Tests for API routes and JWT helper funcs using pytest
+- Integration with `github actions` to provide automatic execution of tests and mypy lint
+
+
 ### TODO:
 
 - Make own small dependency injector
