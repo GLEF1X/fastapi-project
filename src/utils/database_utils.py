@@ -16,15 +16,15 @@ Dictionary = typing.TypeVar("Dictionary", bound=typing.Dict[typing.Any, typing.A
 
 
 @typing.overload
-def wrap_result(result: typing.Any) -> "Model": ...
+def manual_cast(result: typing.Any) -> "Model": ...
 
 
 @typing.overload
-def wrap_result(result: typing.Any, cast_type: typing.Type[T]) -> T: ...
+def manual_cast(result: typing.Any, cast_type: typing.Type[T]) -> T: ...
 
 
 # noinspection PyUnusedLocal
-def wrap_result(result, cast_type=None):
+def manual_cast(result, cast_type=None):
     return result
 
 

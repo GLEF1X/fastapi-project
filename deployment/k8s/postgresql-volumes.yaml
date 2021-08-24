@@ -11,7 +11,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Delete
   hostPath:
-    path: /pgdata
+    path: /database/pgdata
     type: DirectoryOrCreate
 
 
@@ -23,6 +23,43 @@ metadata:
   name: postgres-pvc
 spec:
   volumeName: postgres-pv
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
+# PV for backups
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-backup-pv
+spec:
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: standard
+  capacity:
+    storage: 4Gi
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  hostPath:
+    path: /database/backups
+    type: DirectoryOrCreate
+
+---
+
+# PVC for backups
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-backup-pvc
+spec:
+  volumeName: postgres-backup-pv
   storageClassName: standard
   accessModes:
     - ReadWriteOnce

@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+spec:
+  # Backup the database at 2 PM
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          name: postgres-backup-worker
+        spec:
+          containers:
+            - name: postgres-backup
+              image: 90956565/postgresql-backup:1.4-beta
+              imagePullPolicy: Always
+              envFrom:
+                - secretRef:
+                    name: postgresql-secret
+              env:
+                - name: POSTGRES_HOST
+                  value: 'postgresql-service.test'
+              volumeMounts:
+                - mountPath: /var/backups
+                  name: postgres-backup-volume
+          restartPolicy: Never
+          volumes:
+            - name: postgres-backup-volume
+              persistentVolumeClaim:
+                claimName: postgres-backup-pvc
+

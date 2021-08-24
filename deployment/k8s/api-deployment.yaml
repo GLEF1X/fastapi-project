@@ -38,6 +38,11 @@ spec:
                 name: postgresql-secret
           env:
             - name: POSTGRES_HOST
-              value: 'postgresql-service.default'
+              value: 'postgresql-service.test'
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /api/v1/healthcheck
+            timeoutSeconds: 5
           command: [ "sh", "-c", "alembic upgrade head && python -m src" ]
 

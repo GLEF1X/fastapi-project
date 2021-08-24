@@ -5,7 +5,7 @@ from decimal import Decimal
 from src.services.database import Product
 from src.services.database.models import SizeEnum
 from src.services.database.repositories.base import BaseRepository, Model
-from src.utils.database_utils import wrap_result, filter_payload
+from src.utils.database_utils import manual_cast, filter_payload
 
 
 class ProductRepository(BaseRepository[Product]):
@@ -20,7 +20,7 @@ class ProductRepository(BaseRepository[Product]):
                           created_at: typing.Optional[datetime] = None
                           ) -> Model:
         payload = filter_payload(locals())
-        return wrap_result(await self._insert(**payload))
+        return manual_cast(await self._insert(**payload))
 
     async def get_product_by_id(self, product_id: int) -> Model:
-        return wrap_result(await self._select_one(self.model.id == product_id))
+        return manual_cast(await self._select_one(self.model.id == product_id))
