@@ -8,7 +8,7 @@ from src.services.misc import DefaultResponse
 from src.services.misc.schemas import Product
 from src.utils.endpoints_specs import ProductBodySpec
 
-api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth)])
+api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth())])
 
 
 # noinspection PyUnusedLocal

@@ -14,7 +14,7 @@ from src.services.misc.schemas import ObjectCount, SimpleResponse
 from src.utils.endpoints_specs import UserBodySpec
 from src.utils.responses import NotFoundJsonResponse, BadRequestJsonResponse
 
-api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth)])
+api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth())])
 
 
 # noinspection PyUnusedLocal

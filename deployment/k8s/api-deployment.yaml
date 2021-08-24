@@ -24,8 +24,8 @@ spec:
     spec:
       containers:
         - name: fastapi-backend
-          image: 90956565/fastapi-test-app:latest
-          imagePullPolicy: Always
+          image: 90956565/fastapi-test-app:1-stable
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               protocol: 'TCP'

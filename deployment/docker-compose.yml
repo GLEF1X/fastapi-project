@@ -6,7 +6,7 @@ services:
     container_name: fastapi-backend
     build:
       context: ..
-      dockerfile: deployment/Dockerfile
+      dockerfile: backend/Dockerfile.fastapi
       target: development
       args:
         INSTALL_DEV: ${INSTALL_DEV:-false}

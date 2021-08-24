@@ -17,7 +17,7 @@ from src.services.database.repositories.product import ProductRepository
 from src.services.misc import Product
 from src.utils.responses import get_pydantic_model_or_return_raw_response
 
-api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth)])
+api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth())])
 
 
 @api_router.get(
