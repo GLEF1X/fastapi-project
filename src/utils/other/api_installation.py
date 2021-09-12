@@ -10,7 +10,6 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from src.api import setup_routers
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker, ProductRepositoryDependencyMarker
-from src.api.v1.dependencies.security import JWTBasedOAuth, JWTBasedOAuth
 from src.api.v1.errors.http_error import http_error_handler
 from src.api.v1.errors.validation_error import http422_error_handler
 from src.core import ApplicationSettings
