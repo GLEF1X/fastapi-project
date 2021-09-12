@@ -12,7 +12,7 @@ from src.core.settings import get_settings
 from src.services.database.models.base import Base
 
 target_metadata = Base.metadata
-config = context.config
+config = context.config  # type: ignore
 fileConfig(config.config_file_name)
 application_settings = get_settings()
 config.set_main_option(
