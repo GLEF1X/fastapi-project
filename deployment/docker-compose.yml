@@ -6,8 +6,7 @@ services:
     container_name: fastapi-backend
     build:
       context: ..
-      dockerfile: deployment/Dockerfile.fastapi
-      target: development
+      dockerfile: deployment/fastapi.Dockerfile
       args:
         INSTALL_DEV: ${INSTALL_DEV:-false}
     restart: always
@@ -34,7 +33,7 @@ services:
 
   pg_database:
     container_name: ${DB_CONTAINER_NAME:-postgres}
-    image: postgres:13-alpine
+    image: postgres:14-alpine
     restart: always
     volumes:
       - pgdata:/var/lib/postgresql/data

@@ -2,6 +2,8 @@
 
 ![test_workflow](https://github.com/GLEF1X/fastapi-project/actions/workflows/mypy_and_tests.yaml/badge.svg)
 
+**If you want to check how to implement pure "clean architecture", you can visit another [github repo](https://github.com/GLEF1X/blacksheep-clean-architecture)**
+
 ### What has already been done?🧭
 
 - Deployment using Docker and docker-compose

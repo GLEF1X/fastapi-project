@@ -8,9 +8,6 @@ Create Date: 2021-08-14 15:18:48.150866
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
-from src.services.database.types.hashed import HashedPassword
-
 revision = '799986945827'
 down_revision = None
 branch_labels = None
@@ -36,7 +33,7 @@ def upgrade():
                     sa.Column('last_name', sa.VARCHAR(length=100), nullable=True),
                     sa.Column('phone_number', sa.Text(), nullable=True),
                     sa.Column('email', sa.VARCHAR(length=70), nullable=True),
-                    sa.Column('password', HashedPassword(length=100), nullable=True),
+                    sa.Column('password_hash', sa.VARCHAR(length=100), nullable=True),
                     sa.Column('balance', sa.DECIMAL(), server_default='0', nullable=True),
                     sa.Column('username', sa.VARCHAR(length=70), nullable=False),
                     sa.PrimaryKeyConstraint('id'),

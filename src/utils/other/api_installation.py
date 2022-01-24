@@ -1,25 +1,29 @@
-import logging
 from typing import Any, Optional, Dict, no_type_check
 
+from argon2 import PasswordHasher
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.openapi.utils import get_openapi
+from fastapi.security import OAuth2PasswordBearer
+from starlette.config import Config
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from src.api import setup_routers
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker, ProductRepositoryDependencyMarker
+from src.api.v1.dependencies.security import OAuthServiceDependencyMarker, \
+    SecurityGuardServiceDependencyMarker, ServiceAuthorizationDependencyMarker
 from src.api.v1.errors.http_error import http_error_handler
 from src.api.v1.errors.validation_error import http422_error_handler
-from src.core import ApplicationSettings
+from src.core import ApplicationSettings, BASE_DIR
 from src.core.events import create_on_startup_handler, create_on_shutdown_handler
 from src.middlewares.process_time_middleware import add_process_time_header
 from src.services.database.models.base import DatabaseComponents
 from src.services.database.repositories.product import ProductRepository
 from src.services.database.repositories.user import UserRepository
-from src.utils.jwt import SECRET_KEY
-from src.utils.logging_ import CustomizeLogger
+from src.services.security.jwt_service import JWTSecurityGuardService, JWTAuthenticationService
+from src.services.security.oauth import OAuthSecurityService, OAuthIntegration
 from src.utils.other.builder_base import AbstractFastAPIApplicationBuilder
 from src.views import setup_routes
 
@@ -58,7 +62,8 @@ class DevelopmentApplicationBuilder(AbstractFastAPIApplicationBuilder):
             allow_headers=self._settings.fastapi.BACKEND_CORS_ORIGINS,
             expose_headers=["User-Agent", "Authorization"],
         )
-        self.app.add_middleware(middleware_class=SessionMiddleware, secret_key=SECRET_KEY)
+        self.app.add_middleware(middleware_class=SessionMiddleware,
+                                secret_key="!secret")  # TODO replace with real token
 
     @no_type_check
     def configure_routes(self):
@@ -82,58 +87,48 @@ class DevelopmentApplicationBuilder(AbstractFastAPIApplicationBuilder):
         # do gracefully dispose engine on shutdown application
         self.app.state.db_components = components
         self.app.state.settings = self._settings
+
+        pwd_hasher = PasswordHasher()
+
         self.app.dependency_overrides.update(
             {
                 UserRepositoryDependencyMarker: lambda: UserRepository(components.sessionmaker),
-                ProductRepositoryDependencyMarker: lambda: ProductRepository(components.sessionmaker)
+                ProductRepositoryDependencyMarker: lambda: ProductRepository(components.sessionmaker),
+                OAuthServiceDependencyMarker: lambda: OAuthSecurityService(
+                    Config(BASE_DIR / ".env"),
+                    OAuthIntegration(
+                        name='google',
+                        overwrite=False,
+                        kwargs=dict(
+                            server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+                            client_kwargs={
+                                'scope': 'openid email profile'
+                            }
+                        )
+                    )
+                ),
+                SecurityGuardServiceDependencyMarker: lambda: JWTSecurityGuardService(
+                    oauth2_scheme=OAuth2PasswordBearer(
+                        tokenUrl="/api/v1/oauth",
+                        scopes={
+                            "me": "Read information about the current user.",
+                            "items": "Read items."
+                        },
+                    ),
+                    user_repository=UserRepository(components.sessionmaker),
+                    password_hasher=pwd_hasher,
+                    secret_key=self._settings.fastapi.SECRET_KEY,
+                    algorithm="HS256"
+                ),
+                ServiceAuthorizationDependencyMarker: lambda: JWTAuthenticationService(
+                    user_repository=UserRepository(components.sessionmaker),
+                    password_hasher=pwd_hasher,
+                    secret_key=self._settings.fastapi.SECRET_KEY,
+                    algorithm="HS256",
+                    token_expires_in_minutes=self._settings.fastapi.ACCESS_TOKEN_EXPIRE_MINUTES
+                )
             }
         )
-
-
-class DevelopmentApplicationBuilderLoggedProxy(AbstractFastAPIApplicationBuilder):
-
-    def __init__(self, settings: ApplicationSettings, logger: Optional[logging.Logger] = None) -> None:
-        super(DevelopmentApplicationBuilderLoggedProxy, self).__init__(settings)
-        self._underlying_builder = DevelopmentApplicationBuilder(settings=settings)
-        self.app = self._underlying_builder.app
-        if logger is None:
-            self.app.state.logger = CustomizeLogger.make_logger(
-                config_path=settings.system_settings.LOGGING_CONFIG_PATH,
-                to_disable=["uvicorn.access", "uvicorn.asgi", "uvicorn.error"]
-            )
-        else:
-            self.app.state.logger = logger
-        self.app.state.logger.info(settings.json())
-
-    def configure_openapi_schema(self) -> None:
-        self.app.state.logger.info("Configuring API schema")
-        self._underlying_builder.configure_openapi_schema()
-        self.app.state.logger.info("API schema configured successfully")
-
-    def setup_middlewares(self) -> None:
-        self.app.state.logger.info("Configuring middlewares")
-        self._underlying_builder.setup_middlewares()
-        self.app.state.logger.info("Middlewares configured successfully")
-
-    def configure_routes(self) -> None:
-        self.app.state.logger.info("Configuring routes")
-        self._underlying_builder.configure_routes()
-        self.app.state.logger.info("Routes configured successfully")
-
-    def configure_events(self) -> None:
-        self.app.state.logger.info("Configuring events")
-        self._underlying_builder.configure_events()
-        self.app.state.logger.info("Events configured successfully")
-
-    def configure_exception_handlers(self) -> None:
-        self.app.state.logger.info("Configuring exception handlers")
-        self._underlying_builder.configure_exception_handlers()
-        self.app.state.logger.info("Exception handlers configured successfully")
-
-    def configure_application_state(self) -> None:
-        self.app.state.logger.info("Configuring application state and DI")
-        self._underlying_builder.configure_application_state()
-        self.app.state.logger.info("Application state and DI configured successfully")
 
 
 class Director:
@@ -162,4 +157,4 @@ class Director:
         return self.builder.app
 
 
-__all__ = ("Director", "DevelopmentApplicationBuilder", "DevelopmentApplicationBuilderLoggedProxy")
+__all__ = ("Director", "DevelopmentApplicationBuilder")

@@ -1,28 +1,16 @@
-from datetime import timedelta
-
 from authlib.integrations.base_client import OAuthError
-from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends, HTTPException, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
-from starlette.config import Config
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, HTMLResponse
 
-from src.api.v1.dependencies.database import UserRepositoryDependencyMarker
-from src.core import BASE_DIR
-from src.services.database.repositories.user import UserRepository
-from src.utils.exceptions import UserIsNotAuthenticated
-from src.utils.jwt import ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token, authenticate_user
-
-oauth = OAuth(Config(str(BASE_DIR / ".env")))
-oauth.register(
-    name='google',
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={
-        'scope': 'openid email profile'
-    }
+from src.api.v1.dependencies.security import (
+    ServiceAuthorizationDependencyMarker, OAuthServiceDependencyMarker
 )
+from src.services.security.jwt_service import JWTAuthenticationService
+from src.services.security.oauth import OAuthSecurityService
+from src.utils.exceptions import UserIsUnauthorized
 
 api_router = APIRouter()
 
@@ -30,37 +18,34 @@ api_router = APIRouter()
 @api_router.post("/oauth", tags=["Oauth & Oauth2"], name="oauth:login")
 async def login(
         form_data: OAuth2PasswordRequestForm = Depends(),
-        user_repository: UserRepository = Depends(UserRepositoryDependencyMarker),
+        authentication_service: JWTAuthenticationService = Depends(ServiceAuthorizationDependencyMarker)
+        # DIP on demand
 ):
     try:
-        user = await authenticate_user(form_data.username, form_data.password, user_repository)
-    except UserIsNotAuthenticated as ex:
+        access_token = await authentication_service.authenticate_user(form_data)
+        return {"access_token": access_token, "token_type": "bearer"}
+    except UserIsUnauthorized as ex:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail=ex.hint,
             headers={"WWW-Authenticate": "Bearer"},
         ) from ex
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_jwt_token(
-        jwt_content={"sub": user.username, "scopes": form_data.scopes},
-        expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @api_router.get("/login/google")
-async def login_via_google(request: Request):
+async def login_via_google(request: Request,
+                           oauth_service: OAuthSecurityService = Depends(OAuthServiceDependencyMarker)):
     redirect_uri = api_router.url_path_for("oauth:google")
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+    return await oauth_service.google.authorize_redirect(request, redirect_uri)
 
 
 @api_router.get('/auth/google', name="oauth:google")
-async def auth(request: Request):
+async def auth(request: Request, oauth_service: OAuthSecurityService = Depends(OAuthServiceDependencyMarker)):
     try:
-        token = await oauth.google.authorize_access_token(request)
+        token = await oauth_service.google.authorize_access_token(request)
     except OAuthError as error:
         return HTMLResponse(f'<h1>{error.error}</h1>')
-    user = await oauth.google.parse_id_token(request, token)
+    user = await oauth_service.google.parse_id_token(request, token)
     request.session['user'] = dict(user)
     return RedirectResponse(url='/')
 

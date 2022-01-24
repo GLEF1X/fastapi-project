@@ -1,7 +1,6 @@
+import logging
 import time
 from typing import Optional, cast, Type, Dict, Any
-
-from loguru import logger
 from sqlalchemy import inspect, event
 from sqlalchemy.dialects.postgresql.asyncpg import (
     AsyncAdapt_asyncpg_cursor,
@@ -18,6 +17,8 @@ from sqlalchemy.orm.decl_api import (
     has_inherited_table
 )
 from sqlalchemy.util import ImmutableProperties
+
+logger = logging.getLogger("sqlalchemy.execution")
 
 mapper_registry = registry()
 ASTERISK = "*"
@@ -83,7 +84,7 @@ def after_execute(
     total = time.monotonic() - conn.info["query_start_time"].pop(-1)
     # sqlalchemy bug, executed twice `#4181` issue number
     logger.debug("Query Complete!")
-    logger.debug("Total Time: {exec_time}", exec_time=total)
+    logger.debug("Total Time: %s", total)
 
 
 class DatabaseComponents:

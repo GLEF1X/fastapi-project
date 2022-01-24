@@ -1,5 +1,5 @@
 # `python-base` sets up all our shared environment variables
-FROM python:3.9.5-slim-buster as python-base
+FROM python:3.9.8-buster as python-base
 
     # python
 ENV PYTHONUNBUFFERED=1 \
@@ -13,7 +13,7 @@ ENV PYTHONUNBUFFERED=1 \
     \
     # poetry
     # https://python-poetry.org/docs/configuration/#using-environment-variables
-    POETRY_VERSION=1.1.7 \
+    POETRY_VERSION=1.1.12 \
     # make poetry install to this location
     POETRY_HOME="/opt/poetry" \
     # make poetry create the virtual environment in the project's root
@@ -36,29 +36,32 @@ ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
 
 # `builder-base` stage is used to build deps + create our virtual environment
 FROM python-base as builder-base
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         # deps for installing poetry
         curl \
         # deps for building python deps
         build-essential \
-    && apt-get install -y --no-install-recommends build-essential gcc && apt install -y git
+    && apt-get install -y --no-install-recommends build-essential gcc git && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
-# install poetry - respects $POETRY_VERSION & $POETRY_HOME
+# with_changed_query_model poetry - respects $POETRY_VERSION & $POETRY_HOME
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 
 # copy project requirement files here to ensure they will be cached.
 WORKDIR $PYSETUP_PATH
-COPY poetry.lock pyproject.toml ./
+COPY ./poetry.lock ./pyproject.toml ./
 
-ARG INSTALL_DEV=false
-RUN poetry self update \
-    && bash -c "if [ $INSTALL_DEV == 'true' ] ; then poetry install --no-root ; else poetry install --no-root --no-dev ; fi"
+# update poetry and with_changed_query_model runtime deps - uses $POETRY_VIRTUALENVS_IN_PROJECT internally
+RUN poetry self update && poetry install --no-dev
+
 
 # Прод-образ, куда копируются все собранные ранее зависимости
-FROM builder-base as development
-
-
+FROM builder-base as production
+# create the app user
+RUN addgroup --system app && adduser --system --group app
 WORKDIR $PYSETUP_PATH
 # copy in our built poetry + venv
 COPY --from=builder-base $POETRY_HOME $POETRY_HOME
@@ -67,13 +70,11 @@ COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
 # quicker install as runtime deps are already installed
 RUN poetry install
 
+# chown all the files to the app user
 
-# Create user and set ownership and permissions as required
-RUN addgroup --system app_user && adduser --system app_user
-# ... copy application files
-USER app_user
-
-ENV WORKDIR=/usr/src/app
+ENV WORKDIR=/bot
 WORKDIR $WORKDIR
 ENV PATH="/opt/venv/bin:$PATH"
-COPY --chown=app_user:app_user . $WORKDIR
+COPY . $WORKDIR
+
+RUN chown -R app:app $WORKDIR

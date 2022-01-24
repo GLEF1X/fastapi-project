@@ -2,13 +2,12 @@ from fastapi import Header, Depends, APIRouter
 from fastapi.responses import Response
 
 from src.api.v1.dependencies.database import ProductRepositoryDependencyMarker
-from src.api.v1.dependencies.security import JWTBasedOAuth
+from src.api.v1.dependencies.security import SecurityGuardServiceDependencyMarker
 from src.services.database.repositories.product import ProductRepository
-from src.services.misc import DefaultResponse
-from src.services.misc.schemas import Product
+from src.api.dto import ProductDTO, DefaultResponse
 from src.utils.endpoints_specs import ProductBodySpec
 
-api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth())])
+api_router = APIRouter(dependencies=[Depends(SecurityGuardServiceDependencyMarker)])
 
 
 # noinspection PyUnusedLocal
@@ -20,7 +19,7 @@ api_router = APIRouter(dependencies=[Depends(JWTBasedOAuth())])
     name="products:create_product"
 )
 async def create_product(
-        product: Product = ProductBodySpec.item,
+        product: ProductDTO = ProductBodySpec.item,
         user_agent: str = Header(..., title="User-Agent"),
         product_crud: ProductRepository = Depends(ProductRepositoryDependencyMarker),
 ):

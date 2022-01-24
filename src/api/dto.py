@@ -1,13 +1,12 @@
 import datetime
-from typing import Optional, Any, List
+from typing import Optional, List
 
-from email_validator import validate_email
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, EmailStr
 
 from src.services.database.models import SizeEnum
 
 
-class User(BaseModel):
+class UserDTO(BaseModel):
     first_name: str = Field(..., example="Gleb", title="Имя")
     last_name: str = Field(..., example="Garanin", title="Фамилия")
     phone_number: Optional[str] = Field(
@@ -18,7 +17,7 @@ class User(BaseModel):
         title="Номер мобильного телефона",
         example="+7900232132",
     )
-    email: Optional[str] = Field(
+    email: Optional[EmailStr] = Field(
         None, title="Адрес электронной почты", example="glebgar567@gmail.com"
     )
     balance: float
@@ -26,17 +25,11 @@ class User(BaseModel):
     id: Optional[int] = None
     username: str = Field(..., example="GLEF1X")
 
-    @validator("email")
-    def validate_em(cls, v: Any) -> str:
-        if not validate_email(v):
-            raise ValueError("bad email format")
-        return v
-
     class Config:
         orm_mode = True
 
 
-class Product(BaseModel):
+class ProductDTO(BaseModel):
     id: Optional[int] = None
     name: str
     unit_price: float
@@ -63,7 +56,7 @@ class DefaultResponse(BaseModel):
     success: bool = False
 
 
-class ObjectCount(BaseModel):
+class ObjectCountDTO(BaseModel):
     count: int = Field(..., example=44)
 
 
@@ -76,11 +69,11 @@ class TestResponse(BaseModel):
     user_agent: Optional[str] = Field(None, alias="User-Agent")
 
 
-class Token(BaseModel):
+class AccessToken(BaseModel):
     access_token: str
     token_type: str
 
 
-class TokenData(BaseModel):
+class TokenPayload(BaseModel):
     username: str
     scopes: List[str] = []

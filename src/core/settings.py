@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pathlib
 import secrets
 from functools import lru_cache
@@ -14,7 +12,7 @@ T = TypeVar("T")
 
 
 @lru_cache()
-def get_settings() -> ApplicationSettings:
+def get_settings() -> "ApplicationSettings":
     return ApplicationSettings()
 
 
@@ -53,6 +51,9 @@ class FastAPISettings(BaseSettings):
     OPEN_API_ROOT: str = Field(..., env="DEFAULT_OPEN_API_ROOT")
     IS_PRODUCTION: str = Field(..., env="IS_PRODUCTION")
     TEMPLATES_DIR: str = str(BASE_DIR / "templates")
+
+    HOST: str = Field(..., env="APPLICATION_HOST")
+    PORT: int = Field(..., env="APPLICATION_PORT")
 
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
@@ -119,7 +120,7 @@ class RedisSettings(BaseSettings):
         env_file_encoding = "utf-8"
 
 
-class APIServicesSettings(BaseSettings):
+class ExternalAPISettings(BaseSettings):
     QIWI_SECRET: Optional[str] = Field(None, env="QIWI_SECRET")
     QIWI_API_TOKEN: Optional[str] = Field(None, env="QIWI_API_TOKEN")
     PHONE_NUMBER: Optional[str] = Field(None, env="PHONE_NUMBER")
@@ -145,7 +146,7 @@ class ApplicationSettings(BaseSettings):
     database: DatabaseSettings = DatabaseSettings()
     fastapi: FastAPISettings = FastAPISettings()  # noqa
     redis: RedisSettings = RedisSettings()
-    api: APIServicesSettings = APIServicesSettings()
+    external_apis: ExternalAPISettings = ExternalAPISettings()
     tests: TestSettings = TestSettings()
     system_settings: SystemSettings = SystemSettings()
 

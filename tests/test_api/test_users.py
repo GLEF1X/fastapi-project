@@ -43,4 +43,4 @@ async def test_get_all_users(authorized_client: AsyncClient, app: FastAPI) -> No
 async def test_delete_user(authorized_client: AsyncClient, app: FastAPI, test_user: User) -> None:
     response = await authorized_client.delete(app.url_path_for("users:delete_user", user_id=str(test_user.id)))
     assert response.status_code == 200
-    assert response.json() == {"message": f"User with id {test_user.id} was successfully deleted from database"}
+    assert response.json() == {"message": f"UserDTO with id {test_user.id} was successfully deleted from database"}

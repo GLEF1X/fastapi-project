@@ -35,3 +35,7 @@ class UserRepository(BaseRepository[User]):
 
     async def get_users_count(self) -> int:
         return await self._count()
+
+    async def update_password_hash(self, new_pwd_hash: str, user_id: int) -> None:
+        await self._update(self.model.id == user_id, password_hash=new_pwd_hash)
+
