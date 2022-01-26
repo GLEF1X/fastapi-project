@@ -12,6 +12,7 @@ services:
     restart: always
     depends_on:
       - pg_database
+      - rabbitmq
     networks:
       - backend
     command:
@@ -38,12 +39,16 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     env_file:
-      - ../.env
+      - "../.env"
     logging:
       driver: "json-file"
       options:
-        max-size: "200k"
-        max-file: "10"
+        max-size: 10m
+        max-file: "3"
+        labels: "dev_status"
+        env: "os"
+    environment:
+      - os=ubuntu
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
       interval: 1s
@@ -54,6 +59,33 @@ services:
     expose:
       - 5432
 
+  rabbitmq:
+    container_name: rabbitmq-broker
+    image: rabbitmq:management-alpine
+    restart: on-failure
+    env_file:
+      - "../.env"
+    stop_signal: SIGINT
+    logging:
+      driver: "json-file"
+      options:
+        max-size: 10m
+        max-file: "3"
+        labels: "dev_status"
+        env: "os"
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 20s
+      retries: 5
+    environment:
+      - os=ubuntu
+    ports:
+      - "32121:15672"
+      - "5672:5672"
+    networks:
+      - backend
+
 volumes:
   pgdata:
     name: postgres-data
@@ -61,3 +93,4 @@ volumes:
 networks:
   backend:
     driver: bridge
+
