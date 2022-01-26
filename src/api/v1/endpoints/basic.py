@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker
-from src.services.database.repositories.user import UserRepository
-from src.api.dto import TestResponse
+from src.services.database.repositories.user_repository import UserRepository
+from src.api.v1.dto import TestResponse
 
 fundamental_api_router = APIRouter(prefix="/api/v1")
 

@@ -10,7 +10,7 @@ def setup_routers() -> APIRouter:
     fundamental_api_router.include_router(oauth.api_router)
     fundamental_api_router.include_router(products.api_router)
     fundamental_api_router.include_router(not_for_production.api_router)
-    fundamental_api_router.include_router(service.api_router)
+    fundamental_api_router.include_router(healthcheck.api_router)
     return fundamental_api_router
 
 

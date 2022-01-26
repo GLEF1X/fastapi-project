@@ -15,10 +15,10 @@ from sqlalchemy.orm import sessionmaker
 from src.core import ApplicationSettings
 from src.services.database import User, Product
 from src.services.database.models import SizeEnum
-from src.services.database.repositories.product import ProductRepository
-from src.services.database.repositories.user import UserRepository
+from src.services.database.repositories.product_repository import ProductRepository
+from src.services.database.repositories.user_repository import UserRepository
 from src.utils import jwt
-from src.utils.other.api_installation import DevelopmentApplicationBuilder, Director
+from src.utils.application_builder.api_installation import DevelopmentApplicationBuilder, Director
 
 
 @pytest.fixture(scope="module")

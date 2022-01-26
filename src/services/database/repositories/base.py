@@ -60,7 +60,6 @@ class BaseRepository(ABC, typing.Generic[Model]):
             insert_stmt = (
                 insert(self.model)
                     .values(**values)
-                    .on_conflict_do_nothing()
                     .returning(self.model)
             )
             result = (await self._session.execute(insert_stmt)).mappings().first()

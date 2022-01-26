@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from src.services.database import UnableToDelete
+from src.services.database import DatabaseError
 from src.services.database.models import User
 from src.services.database.repositories.base import BaseRepository, Model
 from src.utils.database_utils import manual_cast, filter_payload
@@ -30,8 +30,8 @@ class UserRepository(BaseRepository[User]):
     async def delete_user(self, user_id: int) -> None:
         try:
             await self._delete(self.model.id == user_id)
-        except IntegrityError:
-            raise UnableToDelete()
+        except IntegrityError as ex:
+            raise DatabaseError(orig=ex)
 
     async def get_user_by_username(self, username: str) -> Model:
         return manual_cast(await self._select_one(self.model.username == username))

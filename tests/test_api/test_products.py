@@ -2,7 +2,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from src.api.dto import ProductDTO
+from src.api.v1.dto import ProductDTO
 from src.services.database.models import SizeEnum
 
 pytestmark = pytest.mark.asyncio

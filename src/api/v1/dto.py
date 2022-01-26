@@ -17,8 +17,8 @@ class UserDTO(BaseModel):
         title="Номер мобильного телефона",
         example="+7900232132",
     )
-    email: Optional[EmailStr] = Field(
-        None, title="Адрес электронной почты", example="glebgar567@gmail.com"
+    email: EmailStr = Field(
+        ..., title="Адрес электронной почты", example="glebgar567@gmail.com"
     )
     balance: float
     password: str = Field(..., example="qwerty12345")

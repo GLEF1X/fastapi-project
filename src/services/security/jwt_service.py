@@ -9,10 +9,10 @@ from pydantic import ValidationError
 from starlette import status
 from starlette.requests import Request
 
-from src.api.dto import TokenPayload
+from src.api.v1.dto import TokenPayload
 from src.resources import api_string_templates
 from src.services.database.models.user import User
-from src.services.database.repositories.user import UserRepository
+from src.services.database.repositories.user_repository import UserRepository
 from src.utils.exceptions import UserIsUnauthorized
 from src.utils.password_hashing.protocol import PasswordHasherProto
 
@@ -52,7 +52,7 @@ class JWTSecurityGuardService:
 
     def _decode_token(self, token: str) -> TokenPayload:
         try:
-            payload = jwt.decode(token, self._secret_key, algorithms=[self._algorithm])
+            payload = jwt.decode(token, self._secret_key, algorithm=self._algorithm)
             return TokenPayload(username=payload["username"], scopes=payload.get("scopes", []))
         except (jwt.DecodeError, ValidationError):
             raise HTTPException(
@@ -92,7 +92,7 @@ class JWTAuthenticationService:
             )
 
         try:
-            self._password_hasher.verify(form_data.password, user.password_hash)
+            self._password_hasher.verify(user.password_hash, form_data.password)
         except VerificationError:
             raise UserIsUnauthorized(hint=api_string_templates.INCORRECT_LOGIN_INPUT)
 
@@ -107,4 +107,4 @@ class JWTAuthenticationService:
             **token_payload
         }
         filtered_payload = {k: v for k, v in token_payload.items() if v is not None}
-        return jwt.encode(filtered_payload, self._secret_key, [self._algorithm])
+        return jwt.encode(filtered_payload, self._secret_key, algorithm=self._algorithm)

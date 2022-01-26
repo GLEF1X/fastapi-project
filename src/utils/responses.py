@@ -1,5 +1,6 @@
 from typing import Optional, Type, Any, TypeVar, Union
 
+from fastapi.responses import ORJSONResponse
 from pydantic import ValidationError
 from starlette import status
 from starlette.background import BackgroundTask
@@ -10,7 +11,7 @@ from src.resources import api_string_templates
 Model = TypeVar("Model")
 
 
-class BadRequestJsonResponse(JSONResponse):
+class BadRequestJsonResponse(ORJSONResponse):
 
     def __init__(self,
                  content: Any = None,
@@ -26,7 +27,7 @@ class BadRequestJsonResponse(JSONResponse):
         )
 
 
-class NotFoundJsonResponse(JSONResponse):
+class NotFoundJsonResponse(ORJSONResponse):
 
     def __init__(self,
                  content: Any = None,
@@ -44,7 +45,7 @@ class NotFoundJsonResponse(JSONResponse):
 
 def get_pydantic_model_or_return_raw_response(
         model: Type[Model], db_obj: Optional[Any] = None
-) -> Union[JSONResponse, Model]:
+) -> Union[ORJSONResponse, Model]:
     if db_obj is None:
         return NotFoundJsonResponse(content=api_string_templates.OBJECT_NOT_FOUND)
     try:

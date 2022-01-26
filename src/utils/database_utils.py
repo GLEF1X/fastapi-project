@@ -21,5 +21,5 @@ def manual_cast(result, cast_type=None):
 
 
 @typing.no_type_check
-def filter_payload(payload):
-    return {k: v for k, v in payload.items() if k not in ['cls', 'self'] and v is not None}
+def filter_payload(payload, exclude):
+    return {k: v for k, v in payload.items() if k not in ['cls', 'self', *exclude] and v is not None}

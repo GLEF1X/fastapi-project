@@ -3,15 +3,14 @@ import abc
 import fastapi_jinja
 from fastapi import FastAPI
 
-from src.core import ApplicationSettings
-from src.core.settings import TEMPLATES_DIR
+from src.config.config import Config
 
 
 class AbstractFastAPIApplicationBuilder(metaclass=abc.ABCMeta):
     app: FastAPI
 
-    def __init__(self, settings: ApplicationSettings) -> None:
-        self._settings = settings
+    def __init__(self, config: Config) -> None:
+        self._config = config
 
     @abc.abstractmethod
     def configure_openapi_schema(self) -> None:
@@ -37,6 +36,5 @@ class AbstractFastAPIApplicationBuilder(metaclass=abc.ABCMeta):
     def configure_application_state(self) -> None:
         pass
 
-    @staticmethod
-    def configure_templates() -> None:
-        fastapi_jinja.global_init(TEMPLATES_DIR)
+    def configure_templates(self) -> None:
+        fastapi_jinja.global_init(self._config.server.templates_dir)

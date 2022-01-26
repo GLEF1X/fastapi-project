@@ -88,11 +88,9 @@ def after_execute(
 
 
 class DatabaseComponents:
-    def __init__(self, engine_kwargs: Optional[Dict[Any, Any]] = None, **kwargs) -> None:
+    def __init__(self, connection_uri: str, **engine_kwargs) -> None:
         self.__engine_kwargs = engine_kwargs or {}
-        self.engine = create_async_engine(
-            url=URL.create(**kwargs), **self.__engine_kwargs
-        )
+        self.engine = create_async_engine(url=connection_uri, **self.__engine_kwargs)
         self.sessionmaker = sessionmaker(  # NOQA
             self.engine, class_=AsyncSession, expire_on_commit=False, autoflush=False
         )

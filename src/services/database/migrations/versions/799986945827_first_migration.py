@@ -45,7 +45,8 @@ def upgrade():
                     sa.Column('product_id', sa.SmallInteger(), nullable=True),
                     sa.Column('quantity', sa.SmallInteger(), server_default='1', nullable=True),
                     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
-                    sa.ForeignKeyConstraint(['product_id'], ['products.id'], onupdate='CASCADE', ondelete='CASCADE'),
+                    sa.ForeignKeyConstraint(['product_id'], ['products.id'], onupdate='CASCADE',
+                                            ondelete='CASCADE'),
                     sa.PrimaryKeyConstraint('order_id')
                     )
     # ### end Alembic commands ###

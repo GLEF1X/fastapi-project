@@ -31,6 +31,8 @@ structlog-sentry = "^1.4.0"
 orjson = "^3.6.6"
 colorlog = "^6.6.0"
 uvicorn = "^0.17.0post1"
+omegaconf = "^2.1.1"
+cattrs = "^1.10.0"
 
 [tool.poetry.dev-dependencies]
 alembic = "^1.6.5"
@@ -46,7 +48,7 @@ async-timeout = "^4.0.2"
 pytest-aiohttp = "^1.0.3"
 asgi-lifespan = "^1.0.1"
 gunicorn = "^20.1.0"
-httpx = "0.21.3"
+httpx = "0.22.0"
 pytest-mock = "^3.6.1"
 nest-asyncio = "^1.5.1"
 types-orjson = "^3.6.2"
@@ -54,3 +56,8 @@ types-orjson = "^3.6.2"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "pypi-public"
+url = "https://pypi.org/simple/"
+default = true

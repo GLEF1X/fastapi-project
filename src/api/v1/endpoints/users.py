@@ -1,15 +1,16 @@
 from typing import List
 
+from aio_pika.patterns import RPC
 from fastapi import Path, HTTPException, Depends, APIRouter
 from pydantic import ValidationError
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DatabaseError
+from starlette.background import BackgroundTasks
 
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker
-from src.api.v1.dependencies.security import SecurityGuardServiceDependencyMarker
+from src.api.v1.dependencies.services import SecurityGuardServiceDependencyMarker, RPCDependencyMarker
+from src.api.v1.dto import ObjectCountDTO, SimpleResponse, UserDTO, DefaultResponse
 from src.resources import api_string_templates
-from src.services.database.exceptions import UnableToDelete
-from src.services.database.repositories.user import UserRepository
-from src.api.dto import ObjectCountDTO, SimpleResponse, UserDTO, DefaultResponse
+from src.services.database.repositories.user_repository import UserRepository
 from src.utils.endpoints_specs import UserBodySpec
 from src.utils.responses import NotFoundJsonResponse, BadRequestJsonResponse
 
@@ -47,8 +48,10 @@ async def get_all_users(user_repository: UserRepository = Depends(UserRepository
     name="users:create_user"
 )
 async def create_user(
+        background_tasks: BackgroundTasks,
         user: UserDTO = UserBodySpec.item,
         user_repository: UserRepository = Depends(UserRepositoryDependencyMarker),
+        rpc: RPC = Depends(RPCDependencyMarker),
 ):
     """*Create a new user in database"""
     payload = user.dict(exclude_unset=True)
@@ -56,6 +59,8 @@ async def create_user(
         await user_repository.add_user(**payload)
     except IntegrityError:
         return BadRequestJsonResponse(content=api_string_templates.USERNAME_TAKEN)
+
+    background_tasks.add_task(rpc.call, method_name="send_email")
 
     return {"success": True}
 
@@ -90,7 +95,7 @@ async def delete_user(
 ):
     try:
         await user_repository.delete_user(user_id=user_id)
-    except UnableToDelete:
+    except DatabaseError:
         raise HTTPException(
             status_code=400, detail=f"There isn't entry with id={user_id}"
         )

@@ -20,6 +20,7 @@ class LoggingConfig:
     render_json_logs: bool = False
     disable_sqlalchemy_repetetive_logs: bool = True
     sentry_dsn: Optional[str] = None
+    async_logger: bool = False
 
 
 class RenderProcessorFactory:
@@ -94,7 +95,7 @@ def configure_logging(cfg: LoggingConfig) -> Dict[str, Any]:
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.stdlib.AsyncBoundLogger,  # type: ignore  # noqa
+        wrapper_class=structlog.stdlib.AsyncBoundLogger if cfg.async_logger else structlog.stdlib.BoundLogger,  # type: ignore  # noqa
         cache_logger_on_first_use=True,
     )
     return config

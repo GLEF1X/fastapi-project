@@ -1,0 +1,22 @@
+database:
+  user: postgres
+  password: postgres
+  db_name: fastapi_db
+  host: pg_database
+
+server:
+  app_title: "My REST API"
+  project_version: "1.0.0"
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+  openapi_root: "/openapi.json"
+  is_in_prod: false
+  security:
+    jwt_secret_key: 5153fdc6bc82d5e3cda0b6637e3b6a0abb16ee38ab6ab0304e9ccb1785420e53
+    jwt_access_token_expire_in_minutes: 21600  # 15 days
+
+  host: "0.0.0.0"
+  port: "8080"
+
+rabbitmq:
+  uri: "amqp://glef1x:glef1x@rabbitmq"

@@ -25,6 +25,7 @@ class OAuthSecurityService:
             )
 
     def __getattr__(self, key: str) -> OAuth2Client:
+        """get registered integrations from oauth_client"""
         try:
             return object.__getattribute__(self, key)
         except AttributeError:

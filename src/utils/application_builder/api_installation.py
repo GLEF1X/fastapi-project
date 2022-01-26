@@ -1,3 +1,4 @@
+import contextlib
 from typing import Any, Optional, Dict, no_type_check
 
 from argon2 import PasswordHasher
@@ -5,26 +6,28 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
-from starlette.config import Config
+from starlette.config import Config as StarletteConfig
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from src.api import setup_routers
 from src.api.v1.dependencies.database import UserRepositoryDependencyMarker, ProductRepositoryDependencyMarker
-from src.api.v1.dependencies.security import OAuthServiceDependencyMarker, \
-    SecurityGuardServiceDependencyMarker, ServiceAuthorizationDependencyMarker
+from src.api.v1.dependencies.services import SecurityGuardServiceDependencyMarker, \
+    ServiceAuthorizationDependencyMarker, OAuthServiceDependencyMarker, RPCDependencyMarker
 from src.api.v1.errors.http_error import http_error_handler
 from src.api.v1.errors.validation_error import http422_error_handler
-from src.core import ApplicationSettings, BASE_DIR
+from src.config.config import Config, BASE_DIR
 from src.core.events import create_on_startup_handler, create_on_shutdown_handler
 from src.middlewares.process_time_middleware import add_process_time_header
+from src.services.amqp.mailing import send_email
+from src.services.amqp.rpc import RabbitMQService, Consumer
 from src.services.database.models.base import DatabaseComponents
-from src.services.database.repositories.product import ProductRepository
-from src.services.database.repositories.user import UserRepository
+from src.services.database.repositories.product_repository import ProductRepository
+from src.services.database.repositories.user_repository import UserRepository
 from src.services.security.jwt_service import JWTSecurityGuardService, JWTAuthenticationService
 from src.services.security.oauth import OAuthSecurityService, OAuthIntegration
-from src.utils.other.builder_base import AbstractFastAPIApplicationBuilder
+from src.utils.application_builder.builder_base import AbstractFastAPIApplicationBuilder
 from src.views import setup_routes
 
 ALLOWED_METHODS = ["POST", "PUT", "DELETE", "GET"]
@@ -33,10 +36,10 @@ ALLOWED_METHODS = ["POST", "PUT", "DELETE", "GET"]
 class DevelopmentApplicationBuilder(AbstractFastAPIApplicationBuilder):
     """Class, that provides the installation of FastAPI application"""
 
-    def __init__(self, settings: ApplicationSettings) -> None:
-        super(DevelopmentApplicationBuilder, self).__init__(settings=settings)
-        self.app: FastAPI = FastAPI(**self._settings.fastapi.api_kwargs)  # type: ignore
-        self.app.settings = self._settings  # type: ignore
+    def __init__(self, config: Config) -> None:
+        super(DevelopmentApplicationBuilder, self).__init__(config=config)
+        self.app: FastAPI = FastAPI(**self._config.server.fastapi_instance_kwargs)  # type: ignore
+        self.app.config = self._config  # type: ignore
         self._openapi_schema: Optional[Dict[str, Any]] = None
 
     def configure_openapi_schema(self) -> None:
@@ -56,14 +59,16 @@ class DevelopmentApplicationBuilder(AbstractFastAPIApplicationBuilder):
         self.app.add_middleware(BaseHTTPMiddleware, dispatch=add_process_time_header)
         self.app.add_middleware(
             middleware_class=CORSMiddleware,
-            allow_origins=self._settings.fastapi.BACKEND_CORS_ORIGINS,
+            allow_origins=self._config.server.backend_cors_origins,
             allow_credentials=True,
             allow_methods=ALLOWED_METHODS,
-            allow_headers=self._settings.fastapi.BACKEND_CORS_ORIGINS,
+            allow_headers=self._config.server.backend_cors_origins,
             expose_headers=["User-Agent", "Authorization"],
         )
-        self.app.add_middleware(middleware_class=SessionMiddleware,
-                                secret_key="!secret")  # TODO replace with real token
+        self.app.add_middleware(
+            middleware_class=SessionMiddleware,
+            secret_key="!secret"
+        )  # TODO replace with real token
 
     @no_type_check
     def configure_routes(self):
@@ -79,23 +84,29 @@ class DevelopmentApplicationBuilder(AbstractFastAPIApplicationBuilder):
         self.app.add_exception_handler(HTTPException, http_error_handler)
 
     def configure_application_state(self) -> None:
-        components = DatabaseComponents(drivername="postgresql+asyncpg",
-                                        username=self._settings.database.USER,
-                                        password=self._settings.database.PASS,
-                                        host=self._settings.database.HOST,
-                                        database=self._settings.database.NAME)
+        db_components = DatabaseComponents(self._config.database.connection_uri)
         # do gracefully dispose engine on shutdown application
-        self.app.state.db_components = components
-        self.app.state.settings = self._settings
+        self.app.state.db_components = db_components
+        self.app.state.config = self._config
 
         pwd_hasher = PasswordHasher()
+        rmq_service = RabbitMQService(
+            self._config.rabbitmq.uri,
+            Consumer(name="send_email", callback=send_email)
+        )
+
+        async def rmq_service_spin_up():
+            async with rmq_service as rpc:
+                yield rpc
 
         self.app.dependency_overrides.update(
             {
-                UserRepositoryDependencyMarker: lambda: UserRepository(components.sessionmaker),
-                ProductRepositoryDependencyMarker: lambda: ProductRepository(components.sessionmaker),
+                UserRepositoryDependencyMarker: lambda: UserRepository(
+                    db_components.sessionmaker, pwd_hasher
+                ),
+                ProductRepositoryDependencyMarker: lambda: ProductRepository(db_components.sessionmaker),
                 OAuthServiceDependencyMarker: lambda: OAuthSecurityService(
-                    Config(BASE_DIR / ".env"),
+                    StarletteConfig(BASE_DIR / ".env"),
                     OAuthIntegration(
                         name='google',
                         overwrite=False,
@@ -115,18 +126,19 @@ class DevelopmentApplicationBuilder(AbstractFastAPIApplicationBuilder):
                             "items": "Read items."
                         },
                     ),
-                    user_repository=UserRepository(components.sessionmaker),
+                    user_repository=UserRepository(db_components.sessionmaker, pwd_hasher),
                     password_hasher=pwd_hasher,
-                    secret_key=self._settings.fastapi.SECRET_KEY,
+                    secret_key=self._config.server.security.jwt_secret_key,
                     algorithm="HS256"
                 ),
                 ServiceAuthorizationDependencyMarker: lambda: JWTAuthenticationService(
-                    user_repository=UserRepository(components.sessionmaker),
+                    user_repository=UserRepository(db_components.sessionmaker, pwd_hasher),
                     password_hasher=pwd_hasher,
-                    secret_key=self._settings.fastapi.SECRET_KEY,
+                    secret_key=self._config.server.security.jwt_secret_key,
                     algorithm="HS256",
-                    token_expires_in_minutes=self._settings.fastapi.ACCESS_TOKEN_EXPIRE_MINUTES
-                )
+                    token_expires_in_minutes=self._config.server.security.jwt_access_token_expire_in_minutes
+                ),
+                RPCDependencyMarker: rmq_service_spin_up
             }
         )
 

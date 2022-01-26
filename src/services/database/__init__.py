@@ -1,4 +1,4 @@
-from .exceptions import UnableToDelete
+from .exceptions import DatabaseError
 from .models import User, Product, Order
 
-__all__ = ("UnableToDelete", "User", "Product", "Order")
+__all__ = ("DatabaseError", "User", "Product", "Order")

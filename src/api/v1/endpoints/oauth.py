@@ -5,9 +5,8 @@ from starlette import status
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, HTMLResponse
 
-from src.api.v1.dependencies.security import (
-    ServiceAuthorizationDependencyMarker, OAuthServiceDependencyMarker
-)
+from src.api.v1.dependencies.services import ServiceAuthorizationDependencyMarker, \
+    OAuthServiceDependencyMarker
 from src.services.security.jwt_service import JWTAuthenticationService
 from src.services.security.oauth import OAuthSecurityService
 from src.utils.exceptions import UserIsUnauthorized

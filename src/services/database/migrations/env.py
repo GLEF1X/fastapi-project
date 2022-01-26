@@ -5,28 +5,18 @@ from typing import no_type_check
 import nest_asyncio
 from alembic import context
 from sqlalchemy import engine_from_config, pool
-from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from src.core.settings import get_settings
+from src.__main__ import _parse_config
+from src.config.config import BASE_DIR
 from src.services.database.models.base import Base
 
 target_metadata = Base.metadata
+
 config = context.config  # type: ignore
 fileConfig(config.config_file_name)
-application_settings = get_settings()
-config.set_main_option(
-    "sqlalchemy.url",
-    str(
-        URL.create(
-            drivername="postgresql+asyncpg",
-            username=application_settings.database.USER,
-            password=application_settings.database.PASS,
-            database=application_settings.database.NAME,
-            host=application_settings.database.HOST,
-        )
-    ),
-)
+application_settings = _parse_config(BASE_DIR / "src" / "config" / "config.yaml")
+config.set_main_option("sqlalchemy.url", application_settings.database.connection_uri)
 
 
 def run_migrations_offline():
